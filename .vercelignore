@@ -1,0 +1,36 @@
+# Vercel へ送らないもの。
+#
+# Free プランは 24 時間あたり 5,000 ファイルが上限で、一度触れると 24 時間通らなくなる。
+# ビルドに要らないものは最初から送らない(とくに raw/perseus の TEI 72 ファイル・16MB)。
+#
+# **削った後の木でビルドできることを確かめてから足すこと**(HC-062)。
+# 手元でビルドが通ることと、配られる木でビルドが通ることは別である。
+
+node_modules
+.next
+out
+.git
+
+# 原資料。正規化済みの data/index.json だけがビルドに要る
+raw
+
+# 生成・解析の道具。出荷物には関与しない
+etl
+tests
+tests-js
+harness
+vitest.config.ts
+pytest.ini
+schema
+
+# 記録
+docs
+logs
+.scaffold
+.wt
+.github
+
+# 検品の残り物
+shot-*.png
+__pycache__
+.pytest_cache

@@ -13,6 +13,8 @@
     "data": "python etl/normalize.py",
     "palette": "node scripts/validate_palette.mjs",
     "smoke": "node harness/smoke.mjs",
+    "smoke:prod": "node harness/smoke.mjs --url https://mondo-atlas-coral.vercel.app/",
+    "deploy": "vercel deploy --prod --yes --scope twill3c-8670s-projects --archive=tgz",
     "verify": "npm run typecheck && npm run test && npm run build && npm run smoke"
   },
   "dependencies": {

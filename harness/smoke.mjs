@@ -201,21 +201,28 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
-  return failures;
+  return { failures, cases: cases.length };
 }
 
 async function main() {
-  const selfFailures = selfTest();
+  // 件数は対照の配列から導く。定数で書くと、対照を足したときに表示だけが古くなる
+  const { failures: selfFailures, cases: selfCases } = selfTest();
   if (selfFailures.length) {
     console.error("検品器の自己対照に失敗:");
     for (const f of selfFailures) console.error("  - " + f);
     process.exit(2);
   }
-  console.log("検品器の自己対照: OK(正常 1 件を通し、壊れ 7 件を落とした)");
+  console.log(`検品器の自己対照: OK(正常 1 件を通し、壊れ ${selfCases} 件を落とした)`);
 
   if (process.argv.includes("--self-test")) return;
 
-  if (!existsSync(join(OUT, "index.html"))) {
+  // --url で本番を見る。手元の出荷物検査と**別に**、配られているものを引く。
+  // ビルド生成物のどこにも書かれていない故障(配信の Content-Type、反映漏れ)は
+  // デプロイして実際に取得するまで存在しない。
+  const urlArg = process.argv.indexOf("--url");
+  const liveBase = urlArg >= 0 ? process.argv[urlArg + 1] : null;
+
+  if (!liveBase && !existsSync(join(OUT, "index.html"))) {
     console.error("out/index.html が無い。先に `npm run build` を実行すること");
     process.exit(2);
   }
@@ -226,8 +233,9 @@ async function main() {
     tetralogies: new Set(index.works.map((w) => w.tetralogy)).size,
   };
 
-  const server = await serve(OUT);
-  const base = `http://127.0.0.1:${server.address().port}/`;
+  const server = liveBase ? null : await serve(OUT);
+  const base = liveBase ?? `http://127.0.0.1:${server.address().port}/`;
+  console.log(`対象: ${base}`);
   const browser = await chromium.launch();
   let bad = 0;
 
@@ -247,6 +255,15 @@ async function main() {
       const problems = checkAtWidth(width, r, expected);
       if (errors.length) problems.push(`JS エラー: ${errors.join(" / ")}`);
 
+      // 本番では配信の型まで見る。静的書き出しは拡張子の無いファイルを作ることがあり、
+      // 手元の出荷物検査では原理的に見つからない(HC-048)
+      if (liveBase) {
+        const ct = res.headers()["content-type"] ?? "";
+        if (!ct.startsWith("text/html")) {
+          problems.push(`本文の Content-Type が ${ct}(期待 text/html)`);
+        }
+      }
+
       if (problems.length) {
         bad++;
         console.error(`幅 ${width}px — 不合格`);
@@ -265,7 +282,7 @@ async function main() {
     }
   } finally {
     await browser.close();
-    server.close();
+    server?.close();
   }
 
   if (bad) {
