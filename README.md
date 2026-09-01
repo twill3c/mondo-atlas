@@ -8,7 +8,8 @@ Perseus Digital Library のプラトン全集 36 篇を、**ステファヌス�
 
 ## 現在の状態
 
-**L0 完了(2026-09-02)** —— データの取得・正規化・検査まで。画面はまだ無い。
+**L1 完了(2026-09-02)** —— データの取得・正規化・検査と、**画面①「全集の俯瞰」**まで。
+Next.js の静的出力(serverless function ゼロ・cron ゼロ)。まだ本番公開はしていない。
 
 | 実測(2026-09-02) | 値 |
 |---|---|
@@ -42,8 +43,12 @@ Perseus Digital Library のプラトン全集 36 篇を、**ステファヌス�
 raw/perseus/     Perseus TEI 72 ファイル(上流コミット a1849c8 で凍結・無加工)
 data/curated/    人が書いた台帳(作品メタデータ・上流誤植の補正表)
 data/works/      篇ごとの節データ(生成物)
+data/index.json  図の材料(20KB・コミットする)
 etl/             正規化器と調査スクリプト
-tests/           TEST_SPEC の T-001〜T-016
+app/ lib/        Next.js(静的出力)と図の幾何
+tests/           Python 側の検査(T-001〜T-016)
+tests-js/        図とフッタ規則の検査(T-101〜T-128)
+harness/         実ブラウザ検品・フッタ判定規則・字種検査
 docs/            ループごとの所見
 ```
 
@@ -53,7 +58,15 @@ docs/            ループごとの所見
 python etl/normalize.py     # raw/perseus → data/works + data/index.json
 python -m pytest -q         # 検査(T-001〜T-016)
 python harness/text_hygiene.py
+
+npm install
+npm run dev                 # 開発サーバ
+npm run verify              # 型検査 + vitest + 静的ビルド + 実ブラウザ検品
 ```
+
+`npm run verify` は 390 / 768 / 1280 px の 3 幅で実際にページを描かせ、
+横溢れ・縦の伸びすぎ・固定フッタの高さと逃げ・ラベルの切れ・
+目盛りと格子の本数一致を測る。**検品器自身の陽性対照を先に通してから**走査に入る。
 
 ## 出典とライセンス
 

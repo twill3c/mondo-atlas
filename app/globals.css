@@ -1,0 +1,419 @@
+/*
+ * 配色は dataviz の検証済みパレットをそのまま使う。
+ * `node scripts/validate_palette.js "#2a78d6,#eb6834,#1baf7a" --mode light --pairs all`
+ * および dark(#3987e5,#d95926,#199e70)で全項目 PASS(2026-09-02 実測)。
+ * 明モードの aqua だけ contrast 2.74:1 の WARN が出るので、
+ * **帯には必ず値を直接ラベルし、区分名も文字で出す**(色だけで区別させない)。
+ */
+
+:root {
+  color-scheme: light;
+
+  --surface-1: #fcfcfb;
+  --page: #f9f9f7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.1);
+
+  --series-1: #2a78d6; /* 真作 */
+  --series-2: #eb6834; /* 疑作 */
+  --series-3: #1baf7a; /* 偽作 */
+
+  --font-sans: system-ui, -apple-system, "Segoe UI", "Hiragino Sans",
+    "Noto Sans JP", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface-1: #1a1a19;
+    --page: #0d0d0d;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.1);
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface-1: #1a1a19;
+  --page: #0d0d0d;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--page);
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  /* 固定フッタからの逃げ。狭い幅では折り返して高くなるので広く取る */
+  padding-bottom: 5.5rem;
+}
+
+@media (max-width: 34rem) {
+  body {
+    padding-bottom: 7.5rem;
+  }
+}
+
+main {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 3rem;
+}
+
+/* ---------------------------------------------------------------- 見出し */
+
+.lede {
+  color: var(--text-secondary);
+  max-width: 44rem;
+}
+
+h1 {
+  font-size: clamp(1.6rem, 1.1rem + 2vw, 2.4rem);
+  letter-spacing: 0.02em;
+  margin: 0 0 0.25rem;
+}
+
+h1 .sub {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  margin-top: 0.35rem;
+}
+
+h2 {
+  font-size: 1.15rem;
+  margin: 2.5rem 0 0.5rem;
+}
+
+/* -------------------------------------------------------------- 数字の帯 */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 0.75rem;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.kpi {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.75rem 0.9rem;
+}
+
+.kpi__value {
+  font-size: 1.5rem;
+  font-weight: 650;
+  line-height: 1.2;
+  display: block;
+}
+
+.kpi__label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ 操作 */
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: flex-end;
+  margin: 1.5rem 0 0.5rem;
+}
+
+.control__label {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-bottom: 0.3rem;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface-1);
+}
+
+.segmented button {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.8rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 0;
+  cursor: pointer;
+  min-height: 2.25rem;
+}
+
+.segmented button + button {
+  border-left: 1px solid var(--border);
+}
+
+.segmented button[aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--surface-1);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------------------------ 凡例 */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.1rem;
+  padding: 0;
+  margin: 1rem 0 0.25rem;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 3px;
+  flex: none;
+}
+
+.swatch--1 { background: var(--series-1); }
+.swatch--2 { background: var(--series-2); }
+.swatch--3 { background: var(--series-3); }
+
+/* -------------------------------------------------------------------- 図 */
+
+.chart {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1rem 0.5rem;
+  margin-top: 0.75rem;
+  overflow-x: auto;
+}
+
+.chart__inner {
+  min-width: 34rem;
+}
+
+/*
+ * 軸・格子・帯はすべて「ラベル列とメタ列に挟まれた中央の帯域」に収まる。
+ * 値ラベルを帯の直後に流すと、最長の篇(軸の 93%)で右端に溢れて切れた
+ * (代理指標は全部緑のまま。目で見て見つけた)。列を分けて溢れる余地を無くす。
+ */
+.axis {
+  position: relative;
+  height: 1.4rem;
+  margin-left: var(--label-w);
+  margin-right: var(--meta-w);
+  border-bottom: 1px solid var(--axis);
+}
+
+.axis__tick {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rows {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+
+/* 格子は目盛りと同じ配列から描く(G-07) */
+.grid-lines {
+  position: absolute;
+  inset: 0 var(--meta-w) 0 var(--label-w);
+  pointer-events: none;
+}
+
+.grid-lines span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--grid);
+}
+
+.tetralogy {
+  position: relative;
+  margin: 0;
+}
+
+.tetralogy__head {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  padding: 0.55rem 0 0.15rem;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--label-w) 1fr var(--meta-w);
+  align-items: center;
+  position: relative;
+  padding: 0.1rem 0;
+}
+
+.row:hover .row__name {
+  color: var(--text-primary);
+}
+
+.row__name {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 0.5rem;
+}
+
+/* 帯だけが入る帯域。軸・格子と左右がぴったり一致する */
+.row__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 1.15rem;
+}
+
+/* 値と区分。帯域の外に出るので、帯がどれだけ長くても切れない */
+.row__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding-left: 0.5rem;
+  white-space: nowrap;
+}
+
+.bar {
+  height: 0.6rem;
+  border-radius: 0 4px 4px 0; /* データ端だけ丸める */
+  flex: none;
+  min-width: 2px;
+}
+
+.bar--1 { background: var(--series-1); }
+.bar--2 { background: var(--series-2); }
+.bar--3 { background: var(--series-3); }
+
+.row__value {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.row__class {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ 補足 */
+
+.note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--axis);
+  border-radius: 6px;
+  padding: 0.8rem 1rem;
+  margin-top: 1.5rem;
+}
+
+.note p {
+  margin: 0 0 0.5rem;
+}
+
+.note p:last-child {
+  margin-bottom: 0;
+}
+
+.source {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 2rem;
+}
+
+.source a {
+  color: inherit;
+}
+
+/* fleet: fixed footer */
+.fleet-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+  padding: 0.55rem 1rem;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.9;
+  color: var(--text-secondary);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+.fleet-footer a {
+  color: inherit;
+}
+
+.fsep {
+  color: currentColor;
+  opacity: 0.45;
+  margin: 0 -0.3rem;
+  user-select: none;
+}
