@@ -1,0 +1,617 @@
+<title>問答アトラス 設計図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@400;600;900&display=swap">
+
+<style>
+  /* 「歩き方」と同じ配色・同じ余白の構え。二本で一組に見えるようにする。 */
+  :root {
+    color-scheme: light;
+    --paper:   #f4f5f2;
+    --card:    #fbfbf9;
+    --ink:     #15181d;
+    --ink-2:   #525761;
+    --ink-3:   #82868e;
+    --rule:    #ddded7;
+    --oxford:  #1d3f6e;
+    --rubric:  #9b3d26;
+    --shadow:  0 1px 2px rgba(21, 24, 29, .05), 0 8px 24px rgba(21, 24, 29, .045);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper:  #14161a;
+      --card:   #1b1e23;
+      --ink:    #eceef0;
+      --ink-2:  #a8aeb8;
+      --ink-3:  #7d848e;
+      --rule:   #2b2f36;
+      --oxford: #86ade4;
+      --rubric: #d9805f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper:  #14161a;
+    --card:   #1b1e23;
+    --ink:    #eceef0;
+    --ink-2:  #a8aeb8;
+    --ink-3:  #7d848e;
+    --rule:   #2b2f36;
+    --oxford: #86ade4;
+    --rubric: #d9805f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5rem) clamp(1.1rem, 4vw, 2rem) 6rem;
+  }
+
+  .eyebrow {
+    font-family: "Cardo", Georgia, serif;
+    font-size: .82rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 1rem;
+  }
+
+  h1 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 1.2rem + 3.4vw, 3.1rem);
+    line-height: 1.25;
+    text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+
+  .standfirst {
+    font-size: 1.06rem;
+    color: var(--ink-2);
+    max-width: 40rem;
+    margin: 0 0 2.5rem;
+  }
+
+  .rule-top {
+    height: 3px;
+    background: var(--rubric);
+    width: 4.5rem;
+    margin: 0 0 2.75rem;
+  }
+
+  section {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    gap: 0 1.25rem;
+    padding-top: 2.75rem;
+    border-top: 1px solid var(--rule);
+    margin-top: 2.75rem;
+  }
+  section:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+
+  .marg {
+    font-family: "Cardo", Georgia, serif;
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--rubric);
+    line-height: 1.2;
+    text-align: right;
+    padding-top: .15rem;
+    user-select: none;
+  }
+
+  .body > :first-child { margin-top: 0; }
+  .body > :last-child { margin-bottom: 0; }
+
+  h2 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 600;
+    font-size: 1.42rem;
+    line-height: 1.5;
+    text-wrap: balance;
+    margin: 0 0 .9rem;
+  }
+
+  h3 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 2rem 0 .5rem;
+  }
+
+  p { margin: 0 0 1.15rem; }
+
+  .grc { font-family: "Cardo", Georgia, serif; font-size: 1.12em; line-height: 1.6; }
+  .num { font-variant-numeric: tabular-nums; }
+
+  a { color: var(--oxford); text-underline-offset: .18em; }
+  a:focus-visible { outline: 2px solid var(--oxford); outline-offset: 3px; border-radius: 2px; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    font-size: .88em;
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: .08em .35em;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 1.15rem 1.35rem;
+    margin: 1.5rem 0;
+  }
+  .card p:last-child { margin-bottom: 0; }
+
+  .card__label {
+    font-family: "Cardo", Georgia, serif;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: .5rem;
+  }
+
+  .scroller { overflow-x: auto; margin: 1.5rem 0; }
+
+  table { border-collapse: collapse; width: 100%; min-width: 28rem; font-size: .92rem; }
+  th, td {
+    text-align: left;
+    padding: .55rem .8rem .55rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+  th {
+    font-family: "Cardo", Georgia, serif;
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  td.n { text-align: right; font-variant-numeric: tabular-nums; padding-right: 1.2rem; }
+
+  /* said と label の相補分布を見せる二本組 */
+  .pair { display: grid; gap: .55rem; margin: 1.5rem 0; }
+  .pair__row {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    gap: .7rem;
+    align-items: center;
+    font-size: .88rem;
+  }
+  .pair__name { text-align: right; color: var(--ink-2); }
+  .pair__bars { display: grid; gap: 3px; }
+  .pair__bar { height: .45rem; border-radius: 0 2px 2px 0; min-width: 2px; }
+  .pair__bar--label { background: var(--oxford); }
+  .pair__bar--cue { background: var(--rubric); }
+  .pair__key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .3rem 1.2rem;
+    font-size: .82rem;
+    color: var(--ink-2);
+    margin: .2rem 0 0 7.2rem;
+  }
+  .pair__key span { display: flex; align-items: center; gap: .4rem; }
+  .chip { width: .8rem; height: .45rem; border-radius: 2px; flex: none; }
+  .chip--label { background: var(--oxford); }
+  .chip--cue { background: var(--rubric); }
+
+  .callout {
+    border-left: 3px solid var(--rubric);
+    padding: .2rem 0 .2rem 1.1rem;
+    margin: 1.5rem 0;
+  }
+  .callout p:last-child { margin-bottom: 0; }
+
+  ul, ol { margin: 0 0 1.15rem; padding-left: 1.3rem; }
+  li { margin-bottom: .55rem; }
+
+  .gates { display: grid; gap: .1rem; margin: 1.5rem 0; }
+  .gate {
+    display: grid;
+    grid-template-columns: 3.6rem minmax(0, 1fr);
+    gap: .9rem;
+    padding: .7rem 0;
+    border-bottom: 1px solid var(--rule);
+    align-items: baseline;
+  }
+  .gate:last-child { border-bottom: 0; }
+  .gate__id {
+    font-family: "Cardo", Georgia, serif;
+    font-weight: 700;
+    font-size: .92rem;
+    letter-spacing: .06em;
+    color: var(--rubric);
+  }
+  .gate__text { font-size: .93rem; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: .84rem;
+    color: var(--ink-3);
+  }
+  footer p { margin: 0 0 .5rem; }
+
+  @media (max-width: 34rem) {
+    section { grid-template-columns: 1.9rem minmax(0, 1fr); gap: 0 .8rem; }
+    .marg { font-size: 1.15rem; }
+    .pair__row { grid-template-columns: 5rem minmax(0, 1fr); }
+    .pair__key { margin-left: 0; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Mondo Atlas — How it is built</p>
+  <h1>問答アトラス 設計図</h1>
+  <div class="rule-top"></div>
+  <p class="standfirst">
+    このアプリの目玉は、最初に立てた計画とは違うものになりました。
+    そうなった経緯——測って、前提が壊れて、設計を変えたところ——を、
+    数字を添えて残しておきます。作り方の説明であると同時に、
+    <strong>捨てた仮説の記録</strong>です。
+  </p>
+
+  <section>
+    <div class="marg">a</div>
+    <div class="body">
+      <h2>素材</h2>
+      <p>
+        Perseus Digital Library の <code>canonical-greekLit</code> から、プラトン 36 篇の
+        ギリシャ語 36 ファイルと英訳 36 ファイル、計 72 ファイル。
+        上流のコミット <code>a1849c8</code> の状態でリポジトリに凍結してあります。
+      </p>
+      <p>
+        以後のビルドはこの凍結した木しか見ません。<strong>上流の校訂が変わっても勝手には揺れない</strong>
+        —— 取り込むときは、全ゲートを回し直して差分を記録します。
+        底本は改訂されないので、定期更新の経路(cron)は最初から持っていません。
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>項目</th><th>実測(2026-09-02)</th></tr></thead>
+          <tbody>
+            <tr><td>作品</td><td class="n num">36</td></tr>
+            <tr><td>ステファヌス節</td><td class="n num">8,559</td></tr>
+            <tr><td>ステファヌス頁</td><td class="n num">1,752</td></tr>
+            <tr><td>ギリシャ語本文</td><td class="n num">559,618 語</td></tr>
+            <tr><td>英訳</td><td class="n num">888,409 語</td></tr>
+            <tr><td>話者記号(本文外)</td><td class="n num">12,544</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">b</div>
+    <div class="body">
+      <h2>位置の決め方</h2>
+      <p>
+        節の境界は <code>&lt;milestone unit="section" n="327a"/&gt;</code> という
+        <strong>中身のない目印</strong>です。入れ子ではないので、「この目印から次の目印の直前まで」を
+        文書順に走査して切り出す必要があります。
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>属性の有無で本物を判定すると、静かに取りこぼします。</strong>
+          <code>resp="Stephanus"</code> で絞ると、ギリシャ語側 19 件・英語側 546 件の節を落とします。
+          <code>resp</code> を持たない節の目印が実在するからです。
+          判定は <code>unit="section"</code> と<strong>節番号の形</strong>(数字 + a–e)で行います。
+        </p>
+      </div>
+
+      <p>
+        逆に、<code>unit="section"</code> でも節ではないものが混じります。
+        『テアイテトス』に <code>n="imbedded dialogue"</code> が希英 1 件ずつ。
+        <strong>形に合わないものは黙って捨てず、数えて記録します。</strong>
+        当初 8,560 節と書いていた数が 8,559 になったのはこれが理由です。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">c</div>
+    <div class="body">
+      <h2>目玉の前提が壊れた話</h2>
+      <p>
+        最初の構想では、目玉を<strong>「話者別の発話量を全 36 篇で比べる」</strong>に置いていました。
+        Perseus の TEI には <code>&lt;said who="#Σωκράτης"&gt;</code> という話者マークアップがあり、
+        33/36 篇に入っています。数えるだけで済むはずでした。
+      </p>
+
+      <h3>数えてみたら、それは写しだった</h3>
+      <p>
+        <strong>36 篇中 29 篇で、<code>said</code> の件数と <code>label</code> の件数が厳密に一致します。</strong>
+        <code>label</code> は印刷面に出る話者記号(<span class="grc">ΣΩ.</span> <span class="grc">ΚΡ.</span>)です。
+        つまり Perseus の話者マークアップは、<strong>OCT の紙面に印刷された記号を機械的に写したもの</strong>でした。
+      </p>
+      <p>
+        ということは —— <strong>紙に話者記号を印刷しない篇では、使えない。</strong>
+        プラトンには、誰かが後から回想して語る形式(語り直し型)の対話篇があり、
+        そこには話者記号が印刷されません。
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>『パルメニデス』の 1,072 件は、全部が枠の語り手 <span class="grc">#Κέφαλος</span> に付いていました。</strong>
+          しかもその内部に <span class="grc">φάναι τὸν Σωκράτη</span>(とソクラテスが言った)を含みます。
+          別人の発話が、語り手の発話として数えられていたわけです。
+          最初の提案で「最も対話的な篇」の上位に挙げていたこの篇は、数字自体が意味を持っていませんでした。
+        </p>
+      </div>
+
+      <h3>埋め合わせは本文の中にあった</h3>
+      <p>
+        語り直し型では、話者の交替は<strong>叙述の中の発話動詞</strong>で示されます。
+        <span class="grc">ἦν δʼ ἐγώ</span>(と私は言った)、<span class="grc">ἦ δʼ ὅς</span>(と彼は言った)、
+        <span class="grc">ἔφη</span>(彼は言った)。これは校訂者が付けた印ではなく、
+        <strong>ギリシャ語の文そのもの</strong>です。
+      </p>
+      <p>分布は、印刷面の話者記号ときれいに相補的でした。</p>
+
+      <div class="pair">
+        <div class="pair__row">
+          <span class="pair__name">ゴルギアス</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 55.4%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 1%"></span>
+          </span>
+        </div>
+        <div class="pair__row">
+          <span class="pair__name">テアイテトス</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 51.5%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 0.6%"></span>
+          </span>
+        </div>
+        <div class="pair__row">
+          <span class="pair__name">法律</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 100%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 1.3%"></span>
+          </span>
+        </div>
+        <div class="pair__row">
+          <span class="pair__name">国家</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 0.1%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 100%"></span>
+          </span>
+        </div>
+        <div class="pair__row">
+          <span class="pair__name">カルミデス</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 0.1%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 10.1%"></span>
+          </span>
+        </div>
+        <div class="pair__row">
+          <span class="pair__name">饗宴</span>
+          <span class="pair__bars">
+            <span class="pair__bar pair__bar--label" style="width: 0.3%"></span>
+            <span class="pair__bar pair__bar--cue" style="width: 7.5%"></span>
+          </span>
+        </div>
+        <div class="pair__key">
+          <span><span class="chip chip--label"></span>印刷面の話者記号</span>
+          <span><span class="chip chip--cue"></span>叙述内の発話動詞</span>
+        </div>
+      </div>
+
+      <p>
+        『国家』は話者記号 0 件に対して、叙述内の発話動詞が <strong class="num">2,136</strong> 件。
+        内訳は <span class="grc">ἦν δʼ ἐγώ</span> が 601、<span class="grc">ἦ δʼ ὅς</span> が 181、
+        <span class="grc">ἔφη</span> が 1,144。
+      </p>
+
+      <div class="card">
+        <span class="card__label">結論</span>
+        <p>
+          <strong>『国家』の問答は 278 回ではなく、約 2,000 回起きている。</strong>
+          マークアップだけを見ていると、全集で 2 番目に長い対話篇が
+          「ほとんど対話していない」ように見えます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">d</div>
+    <div class="body">
+      <h2>そこで決めた掟 —— 循環の禁止</h2>
+      <p>
+        発話交替の検出は、<strong>自前で書きます。</strong>そして
+        <code>said</code> も <code>label</code> も<strong>検出器の入力にしません</strong>。
+      </p>
+      <p>
+        入れてしまうと「Perseus の校訂方針を再現する検出器」ができるだけで、
+        マークアップの薄い 7 篇では同じように薄い結果を出します。
+        <strong>テストは緑のまま、何も検出できていない</strong>という状態になる。
+      </p>
+      <p>
+        検出器は本文の言語的手がかりだけで書き、印刷面の話者記号は
+        <strong>書き終えたあとの答え合わせにだけ</strong>使います。
+        話者記号が完全に揃っている上演型 29 篇が、そのまま正解データになります。
+      </p>
+      <p>
+        正規化の段階でも、これを構造で担保しました。話者記号は本文フィールドから分離して
+        別の欄に持っています —— <strong>検出器が本文だけを読むことを、コードで確かめられる</strong>ようにするためです。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">e</div>
+    <div class="body">
+      <h2>上流の欠陥を 6 種類、突き合わせた</h2>
+      <p>
+        構造化された XML は「マークアップがあるなら値は揃っている」と信じたくなりますが、
+        実際には人手で打たれた識別子は誤植を含み、編者は自明な繰り返しを省きます。
+        <strong>どちらも構文としては妥当な XML なので、パーサは何も言いません。</strong>
+      </p>
+
+      <div class="scroller">
+        <table>
+          <thead><tr><th>事象</th><th>件数</th><th>扱い</th></tr></thead>
+          <tbody>
+            <tr><td><code>resp</code> を持たない節の目印</td><td class="n num">希 19 / 英 546</td><td>属性で絞らない</td></tr>
+            <tr><td>節でない <code>unit="section"</code></td><td class="n num">2</td><td>数えて記録</td></tr>
+            <tr><td>『書簡集』で節 ID が重複</td><td class="n num">7</td><td>節 ID に手紙番号を足す</td></tr>
+            <tr><td>『メノン』の語末 <span class="grc">μεν</span> → <span class="grc">ΜΕΝ.</span></td><td class="n num">5</td><td>補正表</td></tr>
+            <tr><td>英訳側に節の目印が無い</td><td class="n num">4</td><td>欠落として明示</td></tr>
+            <tr><td>『法律』743 頁の頁目印の欠落</td><td class="n num">1</td><td>節から導く</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>補正表は、上流が直ったら落ちる</h3>
+      <p>
+        『メノン』の誤植は、原本には手を触れずに派生データの側だけを直します。
+        補正の各項目は<strong>期待件数を持っていて、実際の出現数と合わなければ例外で止まります。</strong>
+        上流が修正されれば 5 件に届かず、こちらが気づける仕組みです。
+      </p>
+      <p>
+        直したのは字母だけです。置換で入り込んだ可能性のあるピリオドは、
+        <strong>確かめていないのでそのまま残して</strong>あります。
+      </p>
+
+      <h3>『書簡集』は節番号だけでは一意にならない</h3>
+      <p>
+        13 通の手紙の切れ目が、ステファヌス節の<strong>内側</strong>に落ちます。
+        同じ <code>310b</code> が第 1 書簡の末尾と第 2 書簡の冒頭に現れる。
+        だからこの篇だけ、節 ID に手紙番号を入れて <code>Ep.2.310b</code> と書きます。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">f</div>
+    <div class="body">
+      <h2>検査の構え</h2>
+      <p>
+        「違反 0 件」は「検査した」を意味しません。検出系のテストは、
+        <strong>対象に違反が無いときと、検査そのものが働いていないときとで、まったく同じ緑を返します。</strong>
+        だから禁止・検出系には必ず<strong>陽性対照</strong>を対で置いています。
+      </p>
+
+      <div class="gates">
+        <div class="gate"><span class="gate__id">G-01</span><span class="gate__text">節 ID が全集で一意、篇内でステファヌス順に単調増加する</span></div>
+        <div class="gate"><span class="gate__id">G-02</span><span class="gate__text">字種検査。キリル文字・制御文字の混入 0、NFC 正規化済み</span></div>
+        <div class="gate"><span class="gate__id">G-03</span><span class="gate__text">循環の禁止。発話交替の検出器が校訂者の印を読んでいないこと</span></div>
+        <div class="gate"><span class="gate__id">G-04</span><span class="gate__text">語の取りこぼしが無い。件数ではなく<strong>トークンの列そのもの</strong>を比べる</span></div>
+        <div class="gate"><span class="gate__id">G-05</span><span class="gate__text">希英の節対応。対応しない節は欠落として数え、黙って捨てない</span></div>
+        <div class="gate"><span class="gate__id">G-07</span><span class="gate__text">図のラベル・軸・凡例は、図を生成したのと同じデータから導く</span></div>
+        <div class="gate"><span class="gate__id">G-08</span><span class="gate__text">複数の画面幅で実際に見る(代理指標つき)</span></div>
+      </div>
+
+      <p>
+        G-04 は、正規化の前後で<strong>トークンの列が完全に一致すること</strong>を要求します。
+        件数の一致では、どこかが増えてどこかが減った場合に通ってしまうからです。
+        照合の相手は、節に配る経路とは<strong>別の経路</strong>で作ります
+        —— 同じ結論に着いたことは、同じ理由で着いたことを意味しないので。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">g</div>
+    <div class="body">
+      <h2>代理指標が全部緑だったのに、図が壊れていた話</h2>
+      <p>
+        画面①を作ったとき、実ブラウザでの検査は 3 つの幅すべてで合格していました。
+        横の溢れなし、縦の伸びすぎなし、帯の本数は 36 本、四部作の見出しは 9 個、
+        目盛りと格子の本数も一致。
+      </p>
+
+      <div class="callout">
+        <p>
+          <strong>それでも、最長の篇『法律』の値ラベル「327 頁 真作」は右端で切れていました。</strong>
+          帯が軸の 93.4% を占め、その直後に置いたラベルが押し出されていたのです。
+          図の外枠に横スクロールがあるので、ページ全体の溢れとしては現れません。
+          <strong>見つけたのは、画面を目で見たときでした。</strong>
+        </p>
+      </div>
+
+      <p>
+        直し方は、ラベル用の列を分けて、軸をその手前で終わらせること。
+        帯・軸・格子はラベル列に挟まれた帯域にだけ収まり、
+        帯がどれだけ長くてもラベルは押し出されません。
+      </p>
+      <p>
+        そのうえで、<strong>見つけた故障を機械で捕まえ直しました。</strong>
+        検品器に「各ラベルの <code>scrollWidth &gt; clientWidth</code>」と
+        「帯の右端が自分の帯域を越えていないか」を足し、
+        検品器自身の陽性対照も 7 件から 9 件に増やしています。
+      </p>
+      <p>
+        代理指標は目視の代わりではありません。<strong>目視を忘れたときの網</strong>です。
+        そして網は、目視で穴が見つかるたびに編み直します。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">h</div>
+    <div class="body">
+      <h2>出荷の構え</h2>
+      <p>
+        Next.js の静的書き出し。<strong>serverless function ゼロ、cron ゼロ。</strong>
+        底本が動かないので、更新の経路を持つ理由がありません。課金の経路もありません。
+      </p>
+      <p>
+        図の材料になる索引は 20 KB なので、ビルド時にそのまま取り込みます。
+        <strong>Vercel 側に Python を要求しません。</strong>
+        本文データ(12.5 MB、『国家』単体で 2.37 MB)はまだ配っておらず、
+        次の画面を作るときに「図に使う指標と本文を分けて配る」設計を決めます。
+      </p>
+
+      <div class="card">
+        <span class="card__label">これから</span>
+        <p>
+          次が本命の画面 <strong>「問答の呼吸」</strong>です。1 篇をステファヌス番号の順に展開し、
+          発話の交替がどこで起きているかを帯で示します。
+          その前に、自前の検出器を書いて、上演型 29 篇で答え合わせをする作業があります
+          —— この設計図でいちばん字数を割いた掟が、そこで試されます。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      底本: John Burnet (ed.), <em>Platonis Opera</em>, Oxford: Clarendon Press, 1900–1907.
+      英訳: Fowler, Lamb ほか, <em>Plato in Twelve Volumes</em>, Loeb Classical Library, 1914–.
+    </p>
+    <p>
+      データ提供: <a href="https://github.com/PerseusDL/canonical-greekLit">Perseus Digital Library</a>
+      (Tufts University)。CC BY-SA 4.0。派生データおよび和訳もこれを継承します。
+      ソース: <a href="https://github.com/twill3c/mondo-atlas">twill3c/mondo-atlas</a>。
+    </p>
+  </footer>
+
+</div>

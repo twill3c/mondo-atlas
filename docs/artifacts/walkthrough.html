@@ -1,0 +1,519 @@
+<title>問答アトラスの歩き方</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=Zen+Old+Mincho:wght@400;600;900&display=swap">
+
+<style>
+  /* ------------------------------------------------------------------
+     配色は Burnet の OCT（Oxford Classical Text）の実物から。
+     濃紺の装丁、頁の地、欄外に朱で振られた区切り字。
+     ------------------------------------------------------------------ */
+  :root {
+    color-scheme: light;
+    --paper:   #f4f5f2;
+    --card:    #fbfbf9;
+    --ink:     #15181d;
+    --ink-2:   #525761;
+    --ink-3:   #82868e;
+    --rule:    #ddded7;
+    --oxford:  #1d3f6e;
+    --rubric:  #9b3d26;
+    --shadow:  0 1px 2px rgba(21, 24, 29, .05), 0 8px 24px rgba(21, 24, 29, .045);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper:  #14161a;
+      --card:   #1b1e23;
+      --ink:    #eceef0;
+      --ink-2:  #a8aeb8;
+      --ink-3:  #7d848e;
+      --rule:   #2b2f36;
+      --oxford: #86ade4;
+      --rubric: #d9805f;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper:  #14161a;
+    --card:   #1b1e23;
+    --ink:    #eceef0;
+    --ink-2:  #a8aeb8;
+    --ink-3:  #7d848e;
+    --rule:   #2b2f36;
+    --oxford: #86ade4;
+    --rubric: #d9805f;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 8px 24px rgba(0, 0, 0, .3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Zen Kaku Gothic New", "Hiragino Sans", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.9;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 54rem;
+    margin: 0 auto;
+    padding: clamp(2.5rem, 6vw, 5rem) clamp(1.1rem, 4vw, 2rem) 6rem;
+  }
+
+  /* ---------------------------------------------------------- 見出し部 */
+
+  .eyebrow {
+    font-family: "Cardo", Georgia, serif;
+    font-size: .82rem;
+    letter-spacing: .22em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 1rem;
+  }
+
+  h1 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 900;
+    font-size: clamp(2rem, 1.2rem + 3.4vw, 3.1rem);
+    line-height: 1.25;
+    letter-spacing: .01em;
+    text-wrap: balance;
+    margin: 0 0 1rem;
+  }
+
+  .standfirst {
+    font-size: 1.06rem;
+    color: var(--ink-2);
+    max-width: 40rem;
+    margin: 0 0 2.5rem;
+  }
+
+  .rule-top {
+    height: 3px;
+    background: var(--oxford);
+    width: 4.5rem;
+    margin: 0 0 2.75rem;
+  }
+
+  /* -------------------------------------------------- ステファヌスの余白
+     この文書の構造モチーフは、印刷された頁の欄外に振られた a–e の区切り字。
+     アプリが扱っているものそのものを、読み手の左手に置いておく。
+     ------------------------------------------------------------------ */
+
+  section {
+    display: grid;
+    grid-template-columns: 3.25rem minmax(0, 1fr);
+    gap: 0 1.25rem;
+    padding-top: 2.75rem;
+    border-top: 1px solid var(--rule);
+    margin-top: 2.75rem;
+  }
+  section:first-of-type { border-top: 0; margin-top: 0; padding-top: 0; }
+
+  .marg {
+    font-family: "Cardo", Georgia, serif;
+    font-size: 1.5rem;
+    font-style: italic;
+    color: var(--rubric);
+    line-height: 1.2;
+    text-align: right;
+    padding-top: .15rem;
+    user-select: none;
+  }
+
+  .body > :first-child { margin-top: 0; }
+  .body > :last-child { margin-bottom: 0; }
+
+  h2 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 600;
+    font-size: 1.42rem;
+    line-height: 1.5;
+    letter-spacing: .01em;
+    text-wrap: balance;
+    margin: 0 0 .9rem;
+  }
+
+  h3 {
+    font-family: "Zen Old Mincho", "Yu Mincho", serif;
+    font-weight: 600;
+    font-size: 1.05rem;
+    margin: 2rem 0 .5rem;
+  }
+
+  p { margin: 0 0 1.15rem; }
+
+  strong { font-weight: 700; }
+
+  .grc {
+    font-family: "Cardo", Georgia, serif;
+    font-size: 1.12em;
+    line-height: 1.6;
+  }
+
+  .num { font-variant-numeric: tabular-nums; }
+
+  a { color: var(--oxford); text-underline-offset: .18em; }
+  a:focus-visible {
+    outline: 2px solid var(--oxford);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* ------------------------------------------------------------ 部品 */
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    padding: 1.15rem 1.35rem;
+    margin: 1.5rem 0;
+  }
+
+  .card p:last-child { margin-bottom: 0; }
+
+  .card__label {
+    font-family: "Cardo", Georgia, serif;
+    font-size: .78rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: block;
+    margin-bottom: .5rem;
+  }
+
+  .scroller { overflow-x: auto; margin: 1.5rem 0; }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 26rem;
+    font-size: .92rem;
+  }
+
+  th, td {
+    text-align: left;
+    padding: .55rem .8rem .55rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+
+  th {
+    font-family: "Cardo", Georgia, serif;
+    font-weight: 700;
+    font-size: .82rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  td.n { text-align: right; font-variant-numeric: tabular-nums; padding-right: 1.2rem; }
+
+  /* ステファヌス番号の見本 */
+  .specimen {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 1.4rem 1.5rem;
+    margin: 1.5rem 0;
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr);
+    gap: .1rem 1rem;
+    align-items: baseline;
+  }
+  .specimen__key {
+    font-family: "Cardo", Georgia, serif;
+    font-style: italic;
+    font-size: 1.15rem;
+    color: var(--rubric);
+    text-align: right;
+  }
+  .specimen__line {
+    font-family: "Cardo", Georgia, serif;
+    font-size: 1.14rem;
+    line-height: 1.65;
+  }
+  .specimen__note {
+    grid-column: 2;
+    font-size: .84rem;
+    color: var(--ink-3);
+    margin-top: .5rem;
+  }
+
+  /* 崖のある棒 */
+  .cliff { display: grid; gap: .4rem; margin: 1.5rem 0; }
+  .cliff__row {
+    display: grid;
+    grid-template-columns: 6.5rem minmax(0, 1fr) 3.6rem;
+    align-items: center;
+    gap: .6rem;
+    font-size: .9rem;
+  }
+  .cliff__name { text-align: right; color: var(--ink-2); }
+  .cliff__bar { height: .5rem; border-radius: 0 2px 2px 0; background: var(--oxford); }
+  .cliff__val { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: .85rem; }
+  .cliff__gap {
+    grid-column: 2 / 4;
+    font-size: .8rem;
+    color: var(--rubric);
+    font-family: "Cardo", Georgia, serif;
+    font-style: italic;
+    letter-spacing: .04em;
+    padding: .15rem 0 .35rem;
+  }
+
+  .caution {
+    border-left: 3px solid var(--rubric);
+    padding: .2rem 0 .2rem 1.1rem;
+    margin: 1.5rem 0;
+  }
+  .caution p:last-child { margin-bottom: 0; }
+
+  ul { margin: 0 0 1.15rem; padding-left: 1.2rem; }
+  li { margin-bottom: .5rem; }
+
+  footer {
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--rule);
+    font-size: .84rem;
+    color: var(--ink-3);
+  }
+  footer p { margin: 0 0 .5rem; }
+
+  @media (max-width: 34rem) {
+    section { grid-template-columns: 1.9rem minmax(0, 1fr); gap: 0 .8rem; }
+    .marg { font-size: 1.15rem; }
+    .cliff__row { grid-template-columns: 5rem minmax(0, 1fr) 3.2rem; }
+  }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Mondo Atlas — Reader's Guide</p>
+  <h1>問答アトラスの歩き方</h1>
+  <div class="rule-top"></div>
+  <p class="standfirst">
+    プラトンの著作は「対話篇」と呼ばれる。けれど対話の濃さは篇によって桁違いに違う。
+    このアプリは、全 36 篇に同じ物差しを当てて、その違いを目で見えるようにする試みです。
+    ここでは、何を見ているのか、どう読めばいいのか、そしてどこを疑って読むべきかを説明します。
+  </p>
+
+  <section>
+    <div class="marg">a</div>
+    <div class="body">
+      <h2>いま置いてあるもの</h2>
+      <p>
+        画面はひとつ、<strong>「全集の俯瞰」</strong>です。36 篇を横帯で並べ、長さを比べます。
+        帯の色は真贋の区分、並びは四部作順か長い順、長さの物差しは 3 通りから選べます。
+      </p>
+      <p>
+        底本は <span class="grc">John Burnet</span> が校訂した
+        <em>Platonis Opera</em>(Oxford, 1900–1907)。いわゆる OCT です。
+        英訳は Loeb 版(1914–)。どちらも Perseus Digital Library が公開している電子テキストを使っています。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">b</div>
+    <div class="body">
+      <h2>ステファヌス番号 —— この地図の背骨</h2>
+      <p>
+        プラトンを引用するとき、人は「国家 327a」と書きます。ページ番号でも行番号でもなく、
+        <strong>1578 年にアンリ・エティエンヌ(ステファヌス)が出した版の、頁と欄の位置</strong>です。
+        以来 450 年、どの版で読んでいても、この番号を言えば同じ場所を指せます。
+      </p>
+
+      <div class="specimen">
+        <div class="specimen__key">a</div>
+        <div class="specimen__line grc">κατέβην χθὲς εἰς Πειραιᾶ μετὰ Γλαύκωνος τοῦ Ἀρίστωνος…</div>
+        <div class="specimen__key">b</div>
+        <div class="specimen__line grc">καὶ ἐπειδὴ οἴκαδε ὡρμήμεθα, κατιδὼν οὖν πόρρωθεν…</div>
+        <p class="specimen__note">
+          『国家』の冒頭。<span class="grc">327a</span> は「327 頁の a 欄」の意味で、
+          1 頁はふつう a から e までの 5 欄に分かれます。
+        </p>
+      </div>
+
+      <p>
+        このアプリはこの番号を、そのまま位置の単位に使っています。全集で
+        <strong class="num">8,559</strong> 節、<strong class="num">1,752</strong> 頁。
+        つまり<strong>全作品の全箇所に、世界共通の安定した住所がある</strong>ということです。
+        今後の画面はすべてこの住所の上に載ります。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">c</div>
+    <div class="body">
+      <h2>図の読み方</h2>
+
+      <h3>長さの物差しは 3 通り</h3>
+      <div class="scroller">
+        <table>
+          <thead>
+            <tr><th>物差し</th><th>全集の合計</th><th>何を測っているか</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>ステファヌス頁</td><td class="n num">1,752</td><td>1578 年版で占めた紙の量</td></tr>
+            <tr><td>ステファヌス節</td><td class="n num">8,559</td><td>引用できる位置の数</td></tr>
+            <tr><td>ギリシャ語本文</td><td class="n num">559,618</td><td>実際の語数(話者記号を除く)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        3 つはおおむね同じ順位を出しますが、完全には一致しません。
+        頁は組版の都合を含み、語数は本文そのものを数えているからです。
+        <strong>切り替えて順位が動く篇は、それ自体が何かを言っています。</strong>
+      </p>
+
+      <h3>色は「通説」であって、測定値ではない</h3>
+      <p>
+        帯の色は真作・疑作・偽作の 3 区分です。これは学界の通説を紹介しているだけで、
+        <strong>このアプリが測って出した結論ではありません。</strong>
+        とくに『アルキビアデス I』『ヒッピアス(大)』『エピノミス』『書簡集』は今も議論が続いています。
+      </p>
+      <p>
+        色だけで区別させないよう、各行に区分名を文字でも出しています。
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">d</div>
+    <div class="body">
+      <h2>長い順にすると、崖が見える</h2>
+      <p>
+        並びを「長い順」に変えてみてください。上位 2 篇と 3 位のあいだに、はっきりした断絶があります。
+      </p>
+
+      <div class="cliff">
+        <div class="cliff__row">
+          <span class="cliff__name">法律</span>
+          <span class="cliff__bar" style="width: 100%"></span>
+          <span class="cliff__val">327 頁</span>
+        </div>
+        <div class="cliff__row">
+          <span class="cliff__name">国家</span>
+          <span class="cliff__bar" style="width: 85%"></span>
+          <span class="cliff__val">278 頁</span>
+        </div>
+        <div class="cliff__row">
+          <span class="cliff__name"></span>
+          <span class="cliff__gap">— ここに崖がある —</span>
+        </div>
+        <div class="cliff__row">
+          <span class="cliff__name">ゴルギアス</span>
+          <span class="cliff__bar" style="width: 24.8%"></span>
+          <span class="cliff__val">81 頁</span>
+        </div>
+        <div class="cliff__row">
+          <span class="cliff__name">ティマイオス</span>
+          <span class="cliff__bar" style="width: 23.2%"></span>
+          <span class="cliff__val">76 頁</span>
+        </div>
+        <div class="cliff__row">
+          <span class="cliff__name">テアイテトス</span>
+          <span class="cliff__bar" style="width: 21.1%"></span>
+          <span class="cliff__val">69 頁</span>
+        </div>
+      </div>
+
+      <p>
+        『法律』と『国家』の 2 篇だけが突出し、残り 34 篇は 81 頁以下に収まります。
+        四部作順に戻すと、この 2 篇が第 8・第 9 四部作に分かれて入っていることが分かります。
+        <strong>1 世紀の文法家トラシュロスが整えた 9 群 × 4 篇という配列は、長さを揃えていません。</strong>
+      </p>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">e</div>
+    <div class="body">
+      <h2>疑って読んでほしいところ</h2>
+
+      <div class="caution">
+        <p>
+          <strong>1. 真贋の色は通説です。</strong>
+          くり返しになりますが、測定の結果ではありません。今後この画面に文体計量を足すときも、
+          この区分を「正解」としては使いません。それをやると、通説をなぞっただけの数字が出てきます。
+        </p>
+      </div>
+
+      <div class="caution">
+        <p>
+          <strong>2. 語数は「本文だけ」の数です。</strong>
+          印刷面に出る話者記号(<span class="grc">ΣΩ.</span> <span class="grc">ΚΡ.</span> など、全集で
+          <span class="num">12,544</span> 件)は本文から外してあります。
+          外さずに数えると 574,506 語になりますが、それは語ではなく記号を含んだ数です。
+        </p>
+      </div>
+
+      <div class="caution">
+        <p>
+          <strong>3. 英訳が付かない節が 4 つあります。</strong>
+          『饗宴』181b・『プロタゴラス』332c・『ヒッピアス(大)』302d・『イオン』539d。
+          英訳文が失われているのではなく、Perseus の英語側にその位置の目印が無いだけです。
+          隠さずに「欠落」として数えてあります。
+        </p>
+      </div>
+
+      <div class="caution">
+        <p>
+          <strong>4. 底本側の誤植を 5 件直しています。</strong>
+          『メノン』で、語末の <span class="grc">μεν</span> が話者記号 <span class="grc">ΜΕΝ.</span>
+          に置き換わっている箇所が 5 つありました
+          (<span class="grc">πέμπωΜΕΝ.</span> など)。原本には手を触れず、
+          派生データの側だけを直しています。
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="marg">f</div>
+    <div class="body">
+      <h2>これから増える画面</h2>
+      <p>
+        次に作るのが、このアプリの本命です。
+      </p>
+      <div class="card">
+        <span class="card__label">次の画面 — 問答の呼吸</span>
+        <p>
+          1 篇をステファヌス番号の順に横へ展開し、<strong>発話の交替がどこで起きているか</strong>を帯で示します。
+          対話篇が対話をやめて独白に変わる瞬間が、同じ物差しで 36 篇ぶん並びます。
+        </p>
+        <p>
+          下ごしらえの段階で、ひとつ大きなことが分かりました。
+          <strong>『国家』の問答は、素直に数えると 278 回しか起きていないように見えます。
+          実際には約 2,000 回起きています。</strong>
+          なぜそんな差が出るのか —— それは<a href="https://github.com/twill3c/mondo-atlas/blob/main/docs/L0-findings.md">設計図</a>の側で書きました。
+        </p>
+      </div>
+      <p>
+        そのあとに、主要語の分布(語の地層)、文体の指標、そして
+        ギリシャ語・英訳・和訳を並べて読むリーダーが続きます。
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      底本: John Burnet (ed.), <em>Platonis Opera</em>, Oxford: Clarendon Press, 1900–1907.
+      英訳: Fowler, Lamb ほか, <em>Plato in Twelve Volumes</em>, Loeb Classical Library, 1914–.
+    </p>
+    <p>
+      データ提供: <a href="https://github.com/PerseusDL/canonical-greekLit">Perseus Digital Library</a>
+      (Tufts University)。CC BY-SA 4.0。本アプリの派生データおよび和訳もこれを継承します。
+    </p>
+  </footer>
+
+</div>
