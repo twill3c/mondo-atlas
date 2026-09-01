@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+.vercel/
+__pycache__/
+.pytest_cache/
+*.tsbuildinfo
+
+# 生成物。raw/perseus と data/curated から `python etl/normalize.py` で再生成できる
+data/works/
+data/index.json
+data/derived/
