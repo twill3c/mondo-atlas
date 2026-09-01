@@ -17,3 +17,7 @@ shot-*.png
 # 4 行目の .vercel/ と重複するが、vercel CLI が初回リンク時に自分で書き足したもの。
 # 消すと次のデプロイでまた足されるので残しておく。
 .vercel
+
+# 交替の材料(657KB)。python etl/build_turns.py で再生成できる。
+# 画面②を作るループでコミットに切り替える。
+data/turns.json

@@ -125,11 +125,16 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
                 "epistle": letter,
                 "_raw": [],
                 "sigla": [],
+                # 話者記号の位置(本文の何トークン目の直前に立っていたか)。
+                # **本文には入れない** —— L2 の検出器はこの欄を読まない(G-03)。
+                # 読むのは較正の側だけで、そこが答え合わせの正解になる。
+                "_sig_char": [],
             }
             secs.append(cur)
         elif kind == "siglum":
             if cur is not None:
                 cur["sigla"].append(value)
+                cur["_sig_char"].append(len("".join(cur["_raw"])))
         else:  # text
             (cur["_raw"] if cur is not None else pre_text).append(value)
 
@@ -139,13 +144,18 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
         secs[0]["_raw"].insert(0, preamble.rstrip() + " ")
 
     prev_raw = ""
-    for s in secs:
+    shift = len(preamble.rstrip()) + 1 if (preamble.strip() and secs) else 0
+    for i, s in enumerate(secs):
         raw = "".join(s.pop("_raw"))
         # 直前の節の末尾にも自分の先頭にも空白が無ければ、連結時に空白を入れない
         s["glue_prev"] = bool(
             prev_raw and raw
             and not prev_raw[-1:].isspace() and not raw[:1].isspace())
         s["grc"] = _clean(raw)
+        # 文字位置 → トークン位置。先頭節は前置きの分だけずれる
+        offs = s.pop("_sig_char")
+        adj = shift if i == 0 else 0
+        s["sigla_at"] = [len(tokens(raw[: c + adj])) for c in offs]
         prev_raw = raw
 
     info = {"skipped_milestones": skipped, "preamble_tokens": len(tokens(preamble))}
