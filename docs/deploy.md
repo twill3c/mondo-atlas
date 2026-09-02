@@ -58,7 +58,7 @@ CLI も `api-deployments-free-per-day` で拒否された。
 上限に当たったかどうかは、待つのではなく**GitHub の commit status を読む**と即座に分かる:
 
 ```bash
-gh api repos/twill3c/app-menu/commits/<sha>/status   --jq '.statuses[] | "\(.state) | \(.description)"'
+gh api repos/twill3c/app-menu/commits/<sha>/status --jq '.statuses[] | .state + " | " + .description'
 ```
 
 `vercel ls` の Age を見て「まだ来ていないだけか」と待つより速い(この日は 10 分無駄にした)。
