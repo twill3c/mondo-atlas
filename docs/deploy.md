@@ -86,8 +86,7 @@ gh api repos/twill3c/app-menu/commits/<sha>/status --jq '.statuses[] | .state + 
 本番では別に確かめる:
 
 ```bash
-curl -sS -o /dev/null -w "%{http_code} %{content_type} %{size_download}
-"   https://mondo-atlas-coral.vercel.app/fonts/ebgaramond-greek-ext.woff2
+curl -sS -o /dev/null -w '%{http_code} %{content_type} %{size_download}' https://mondo-atlas-coral.vercel.app/fonts/ebgaramond-greek-ext.woff2
 ```
 
 2026-09-02 実測: 三つとも `200 font/woff2`(6,464 / 10,752 / 23,820 B)。
