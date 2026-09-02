@@ -355,6 +355,219 @@ h2 {
   white-space: nowrap;
 }
 
+/* ------------------------------------------------------------------ 画面 */
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 0.9rem 1.25rem 0;
+}
+
+.nav__item {
+  font-size: 0.86rem;
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.nav__item:hover {
+  border-color: var(--border);
+}
+
+.nav__item[aria-current="page"] {
+  background: var(--text-primary);
+  color: var(--surface-1);
+  font-weight: 600;
+}
+
+/* ------------------------------------------------- 画面②(問答の呼吸) */
+
+.defs-only {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.axis-note {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  max-width: 44rem;
+  margin: 0.5rem 0 0;
+}
+
+/* 検証の状態は**言葉で**言い分ける。色だけに判定を持たせない */
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 1rem 0 0;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border);
+  border-left-width: 3px;
+  border-radius: 6px;
+  background: var(--surface-1);
+}
+
+.trust--high { border-left-color: var(--series-1); }
+.trust--mid { border-left-color: var(--series-2); }
+.trust--low { border-left-color: var(--text-muted); }
+
+.trust__badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.breath {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  gap: 0 0.5rem;
+}
+
+.breath__yaxis {
+  position: relative;
+  height: 11rem;
+}
+
+.breath__yaxis span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.breath__plot {
+  position: relative;
+}
+
+.breath__svg {
+  display: block;
+  width: 100%;
+  height: 11rem;
+  overflow: visible;
+}
+
+.breath__grid {
+  stroke: var(--grid);
+  stroke-width: 1;
+}
+
+.breath__area {
+  stroke: none;
+}
+
+.breath__area--high { fill: var(--series-1); fill-opacity: 0.55; }
+.breath__area--mid { fill: var(--series-2); fill-opacity: 0.45; }
+.breath__area--low { fill-opacity: 1; }
+
+.breath__hatchline {
+  stroke: var(--text-muted);
+  stroke-width: 1.4;
+}
+
+.breath__line {
+  fill: none;
+  stroke: var(--series-1);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.breath__area--mid ~ .breath__line { stroke: var(--series-2); }
+
+.breath__book {
+  stroke: var(--axis);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.breath__booklabels,
+.breath__xaxis {
+  position: relative;
+  height: 1.15rem;
+}
+
+.breath__booklabels span,
+.breath__xaxis span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.breath__booklabels span {
+  color: var(--axis);
+}
+
+.kpis--tight {
+  margin-top: 1rem;
+}
+
+.spark-heading {
+  margin-top: 2.5rem;
+}
+
+.sparks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.spark {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font: inherit;
+  text-align: left;
+  padding: 0.45rem 0.55rem 0.3rem;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  color: inherit;
+}
+
+.spark:hover {
+  border-color: var(--text-muted);
+}
+
+.spark[aria-pressed="true"] {
+  border-color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--text-primary);
+}
+
+.spark__name {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spark svg {
+  display: block;
+  width: 100%;
+  height: 1.6rem;
+}
+
+.spark[aria-pressed="true"] .spark__name {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
 /* ------------------------------------------------------------------ 補足 */
 
 .note {

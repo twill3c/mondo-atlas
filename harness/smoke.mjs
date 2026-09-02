@@ -95,6 +95,15 @@ async function probe(page) {
       tetralogyHeads: document.querySelectorAll(".tetralogy__head").length,
       ticks: document.querySelectorAll(".axis__tick").length,
       gridLines: document.querySelectorAll(".grid-lines span").length,
+      // 画面②。要素名ではなく「何個あるか」で見る
+      sparks: document.querySelectorAll(".spark").length,
+      breathPaths: document.querySelectorAll(".breath__area").length,
+      trustBanners: document.querySelectorAll(".trust").length,
+      navItems: document.querySelectorAll(".nav__item").length,
+      // 面グラフの経路が空でないこと(空の d は「描いたつもり」で通る)
+      emptyPaths: [...document.querySelectorAll(".breath__area, .breath__line")].filter(
+        (p) => (p.getAttribute("d") ?? "").length < 20,
+      ).length,
       // 帯の幅が 0 のものが無いか(データはすべて正)
       zeroBars: [...document.querySelectorAll(".bar")].filter(
         (b) => b.getBoundingClientRect().width < 1,
@@ -114,7 +123,7 @@ async function probe(page) {
   });
 }
 
-function checkAtWidth(width, r, expected) {
+function checkAtWidth(width, r, expected, page = "/") {
   const problems = [];
   if (r.scrollWidth > r.clientWidth + 1) {
     problems.push(`横に溢れている(${r.scrollWidth} > ${r.clientWidth})`);
@@ -134,15 +143,29 @@ function checkAtWidth(width, r, expected) {
       );
     }
   }
-  if (r.bars !== expected.works) problems.push(`帯が ${r.bars} 本(期待 ${expected.works})`);
-  if (r.tetralogyHeads !== expected.tetralogies) {
-    problems.push(`四部作の見出しが ${r.tetralogyHeads}(期待 ${expected.tetralogies})`);
+  if (r.navItems !== 2) problems.push(`画面の切り替えが ${r.navItems} 個(期待 2)`);
+
+  if (page === "/") {
+    if (r.bars !== expected.works) problems.push(`帯が ${r.bars} 本(期待 ${expected.works})`);
+    if (r.tetralogyHeads !== expected.tetralogies) {
+      problems.push(`四部作の見出しが ${r.tetralogyHeads}(期待 ${expected.tetralogies})`);
+    }
+    if (r.ticks !== r.gridLines) {
+      problems.push(`目盛り ${r.ticks} と格子 ${r.gridLines} の本数が違う(出所が一つでない)`);
+    }
+    if (r.ticks < 2) problems.push(`目盛りが ${r.ticks} 本しか無い`);
+    if (r.zeroBars > 0) problems.push(`幅 0 の帯が ${r.zeroBars} 本ある`);
+  } else {
+    // 画面②: 36 篇ぶんのスパークライン + 主図の面と線
+    if (r.sparks !== expected.works) {
+      problems.push(`スパークラインが ${r.sparks} 個(期待 ${expected.works})`);
+    }
+    if (r.breathPaths !== expected.works + 1) {
+      problems.push(`面グラフが ${r.breathPaths} 個(期待 ${expected.works + 1} = 主図 + 一覧)`);
+    }
+    if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
+    if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
   }
-  if (r.ticks !== r.gridLines) {
-    problems.push(`目盛り ${r.ticks} と格子 ${r.gridLines} の本数が違う(出所が一つでない)`);
-  }
-  if (r.ticks < 2) problems.push(`目盛りが ${r.ticks} 本しか無い`);
-  if (r.zeroBars > 0) problems.push(`幅 0 の帯が ${r.zeroBars} 本ある`);
   if (r.clippedLabels?.length) {
     problems.push(`ラベルが切れている ${r.clippedLabels.length} 件: ${r.clippedLabels.slice(0, 4).join(" / ")}`);
   }
@@ -179,11 +202,19 @@ function selfTest() {
     zeroBars: 0,
     clippedLabels: [],
     barsOverflowingTrack: 0,
+    sparks: 36,
+    breathPaths: 37,
+    trustBanners: 1,
+    navItems: 2,
+    emptyPaths: 0,
   };
   const expected = { works: 36, tetralogies: 9 };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
     failures.push("正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, ok, expected, "/breath/").length !== 0) {
+    failures.push("画面②の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -195,13 +226,26 @@ function selfTest() {
     ["幅 0 の帯", { ...ok, zeroBars: 2 }],
     ["ラベルの切れ", { ...ok, clippedLabels: ["327 頁"] }],
     ["帯の溢れ", { ...ok, barsOverflowingTrack: 1 }],
+    ["画面の切り替え欠落", { ...ok, navItems: 1 }],
   ];
   for (const [name, bad] of cases) {
     if (checkAtWidth(1280, bad, expected).length === 0) {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
-  return { failures, cases: cases.length };
+  // 画面②側の対照
+  const breathCases = [
+    ["スパークライン欠落", { ...ok, sparks: 35 }],
+    ["面グラフの数違い", { ...ok, breathPaths: 36 }],
+    ["検証の断り欠落", { ...ok, trustBanners: 0 }],
+    ["中身の無い経路", { ...ok, emptyPaths: 3 }],
+  ];
+  for (const [name, bad] of breathCases) {
+    if (checkAtWidth(1280, bad, expected, "/breath/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
+  return { failures, cases: cases.length + breathCases.length };
 }
 
 async function main() {
@@ -239,20 +283,25 @@ async function main() {
   const browser = await chromium.launch();
   let bad = 0;
 
+  const PAGES = ["/", "/breath/"];
+
   try {
     for (const width of WIDTHS) {
+      for (const pagePath of PAGES) {
       const page = await browser.newPage({ viewport: { width, height: 900 } });
       const errors = [];
       page.on("pageerror", (e) => errors.push(String(e)));
-      const res = await page.goto(base, { waitUntil: "networkidle" });
+      const res = await page.goto(base.replace(/\/$/, "") + pagePath, {
+        waitUntil: "networkidle",
+      });
       if (!res || !res.ok()) {
-        console.error(`  幅 ${width}: 取得に失敗した(${res?.status()})`);
+        console.error(`  幅 ${width} ${pagePath}: 取得に失敗した(${res?.status()})`);
         bad++;
         await page.close();
         continue;
       }
       const r = await probe(page);
-      const problems = checkAtWidth(width, r, expected);
+      const problems = checkAtWidth(width, r, expected, pagePath);
       if (errors.length) problems.push(`JS エラー: ${errors.join(" / ")}`);
 
       // 本番では配信の型まで見る。静的書き出しは拡張子の無いファイルを作ることがあり、
@@ -266,19 +315,27 @@ async function main() {
 
       if (problems.length) {
         bad++;
-        console.error(`幅 ${width}px — 不合格`);
+        console.error(`幅 ${width}px ${pagePath} — 不合格`);
         for (const p of problems) console.error("  - " + p);
       } else {
+        const detail =
+          pagePath === "/"
+            ? `帯 ${r.bars} / 見出し ${r.tetralogyHeads} / 目盛り ${r.ticks}`
+            : `一覧 ${r.sparks} / 面 ${r.breathPaths} / 断り ${r.trustBanners}`;
         console.log(
-          `幅 ${width}px — OK(帯 ${r.bars} / 見出し ${r.tetralogyHeads} / ` +
-            `目盛り ${r.ticks} / 高さ ${r.pageHeight}px / ` +
+          `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,
         );
       }
       if (process.argv.includes("--shot")) {
-        await page.screenshot({ path: join(ROOT, `shot-${width}.png`), fullPage: false });
+        const slug = pagePath === "/" ? "top" : pagePath.replace(/\//g, "");
+        await page.screenshot({
+          path: join(ROOT, `shot-${slug}-${width}.png`),
+          fullPage: false,
+        });
       }
       await page.close();
+      }
     }
   } finally {
     await browser.close();
@@ -286,10 +343,10 @@ async function main() {
   }
 
   if (bad) {
-    console.error(`\n${bad} / ${WIDTHS.length} の幅で不合格`);
+    console.error(`\n${bad} / ${WIDTHS.length * PAGES.length} の組で不合格`);
     process.exit(1);
   }
-  console.log(`\n全 ${WIDTHS.length} 幅で合格`);
+  console.log(`\n全 ${WIDTHS.length} 幅 × ${PAGES.length} 画面で合格`);
 }
 
 main().catch((e) => {

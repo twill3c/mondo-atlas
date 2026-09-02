@@ -21,3 +21,4 @@ shot-*.png
 # 交替の材料(657KB)。python etl/build_turns.py で再生成できる。
 # 画面②を作るループでコミットに切り替える。
 data/turns.json
+# data/breath.json は画面②の材料(106KB)。ビルド時 import するのでコミットする

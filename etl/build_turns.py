@@ -47,8 +47,9 @@ NARRATED_CUES_PER_1K = 3.0
 
 
 def register_of(work, cues_per_1k: float) -> str:
-    """どちらの推定器を使うかを、**実測した性質**で決める。
+    """語り口の**説明用**の区分。推定器の選択には使わない(全篇 max で統一した)。
 
+    どちらの手がかりが優勢かを読者に伝えるためだけの欄である。
     人が書いた narration ラベルは使わない —— 自分の分類を自分で確かめることになる。
     """
     has_sigla = work["n_sigla"] >= 20
@@ -77,18 +78,21 @@ def main():
         reg = register_of(w, per1k)
 
         sections = []
+        # 二つの手がかりの内訳。**どちらが効いているか**を画面で言えるようにする
+        sec_dram: list[int] = []
+        sec_narr: list[int] = []
         for s in w["sections"]:
             tk = normalize.tokens(s["grc"])
+            # **推定器は篇ごとに切り替えない。**
+            # 両方とも本文だけを見るので、片方が拾える交替をもう片方が拾えないだけ。
+            # 切り替えると『パルメニデス』後半(実際は全集で最も密な問答)が
+            # 語り直し型の推定器で 1 件になり、図が「後半は沈黙している」と嘘をつく。
+            # 照合できる 13 篇で実測した差は -0.000 なので、max に統一して問題ない。
             n_dram = len(turns.detect(tk, THRESHOLD))
             n_narr = len(turns.detect_narrated(tk))
-            if reg == "dramatic":
-                est = n_dram
-            elif reg == "narrated":
-                est = n_narr
-            elif reg == "mixed":
-                est = max(n_dram, n_narr)
-            else:
-                est = 0
+            est = max(n_dram, n_narr)
+            sec_dram.append(n_dram)
+            sec_narr.append(n_narr)
             sections.append({
                 "id": s["id"],
                 "page": s["page"],
@@ -106,6 +110,8 @@ def main():
             "register": reg,
             "cues_per_1k": round(per1k, 3),
             "n_turns": sum(x["turns"] for x in sections),
+            "n_dramatic": sum(sec_dram),
+            "n_narrated": sum(sec_narr),
             "n_sigla": w["n_sigla"],
             # 検証の状態。画面はこれを見て、数の確からしさを言い分ける
             "validation": {
@@ -124,6 +130,31 @@ def main():
     json.dump({"threshold": THRESHOLD, "seed": SEED, "works": out},
               open(path, "w", encoding="utf-8"), ensure_ascii=False,
               separators=(",", ":"))
+
+    # 画面が読む圧縮版。並列配列にして 8,559 節ぶんを軽く配る
+    compact = []
+    for w in out:
+        compact.append({
+            "abbr": w["abbr"], "title": w["title_ja"], "tetralogy": w["tetralogy"],
+            "register": w["register"], "validation": w["validation"]["kind"],
+            "f1": w["validation"]["f1"], "p": w["validation"]["p"],
+            "n_turns": w["n_turns"],
+            # 内訳。検証されたのは篇によって「上演型の側」か「語り直し型の側」なので、
+            # 表示する数(max 合成)との差を画面が言えるようにしておく
+            "n_dramatic": w["n_dramatic"],
+            "n_narrated": w["n_narrated"],
+            "pages": [s["page"] for s in w["sections"]],
+            "letters": "".join(s["letter"] for s in w["sections"]),
+            "turns": [s["turns"] for s in w["sections"]],
+            "tokens": [s["tokens"] for s in w["sections"]],
+            "books": [s["book"] for s in w["sections"]] if any(
+                s["book"] for s in w["sections"]) else None,
+        })
+    cpath = os.path.join(ROOT, "data", "breath.json")
+    json.dump({"threshold": THRESHOLD, "works": compact},
+              open(cpath, "w", encoding="utf-8"), ensure_ascii=False,
+              separators=(",", ":"))
+    print("→ {} ({:.0f} KB)".format(cpath, os.path.getsize(cpath) / 1000))
 
     gold_path = os.path.join(ROOT, "data", "derived", "turns-gold.json")
     os.makedirs(os.path.dirname(gold_path), exist_ok=True)

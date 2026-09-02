@@ -8,8 +8,8 @@ Perseus Digital Library のプラトン全集 36 篇を、**ステファヌス�
 
 ## 現在の状態
 
-**L2 完了・本番稼働(2026-09-02)** —— データの取得・正規化・検査、**画面①「全集の俯瞰」**、
-そして**発話交替の自前検出と較正**まで。画面②はまだ無い(材料は `data/turns.json` に出来ている)。
+**L3 完了・本番稼働(2026-09-02)** —— データの取得・正規化・検査、**画面①「全集の俯瞰」**、
+発話交替の自前検出と較正、そして**画面②「問答の呼吸」**まで。
 
 本番: **https://mondo-atlas-coral.vercel.app/**
 
@@ -36,7 +36,7 @@ Next.js の静的出力。**serverless function ゼロ・cron ゼロ**(底本が
 
 埋め合わせは本文の中にある。語り直し型では話者交替が**叙述内の発話動詞**
 (`ἦν δʼ ἐγώ`「と私は言った」/ `ἦ δʼ ὅς`「と彼は言った」)で標示される。
-分布は `<label>` ときれいに相補的で、『国家』では 2,136 件。
+分布は `<label>` ときれいに相補的で、『国家』では 2,106 件。
 
 **『国家』の問答は 278 回ではなく、約 2,000 回起きている。**
 
@@ -62,17 +62,33 @@ Next.js の静的出力。**serverless function ゼロ・cron ゼロ**(底本が
 
 詳細は [docs/L2-findings.md](docs/L2-findings.md)。
 
+## L3 でいちばん大事だった発見
+
+**通説がひとつ、データに出なかった。**
+
+構想では目玉を「『国家』は第 1 巻だけが問答で、以降は独白に化ける」に置いていた。
+巻ごとに測ると、第 1 巻は 24.5 回/千語で、第 7 巻の 29.6 回/千語より**低い**。
+交替の回数で見るかぎり第 1 巻に断絶は無い。目玉の文言を差し替えた。
+
+代わりにデータが選んだのは**メネクセノス**である —— 冒頭が対話(約 45)、
+長い葬送演説の間が平坦(約 18)、末尾で対話が戻る(約 48)。
+「対話が独白になる瞬間」がいちばんはっきり出る。
+『饗宴』では各人の演説が 0 に近く、ソクラテスとディオティマの問答で 40.5 に跳ねる。
+
+詳細は [docs/L3-findings.md](docs/L3-findings.md)。
+
 ## 構成
 
 ```
 raw/perseus/     Perseus TEI 72 ファイル(上流コミット a1849c8 で凍結・無加工)
 data/curated/    人が書いた台帳(作品メタデータ・上流誤植の補正表)
 data/works/      篇ごとの節データ(生成物)
-data/index.json  図の材料(20KB・コミットする)
-etl/             正規化器と調査スクリプト
+data/index.json  画面①の材料(20KB・コミットする)
+data/breath.json 画面②の材料(106KB・コミットする)
+etl/             正規化器・発話交替の検出器・較正・調査スクリプト
 app/ lib/        Next.js(静的出力)と図の幾何
-tests/           Python 側の検査(T-001〜T-016)
-tests-js/        図とフッタ規則の検査(T-101〜T-128)
+tests/           Python 側の検査(T-001〜T-016 / T-201〜T-217)
+tests-js/        図とフッタ規則の検査(T-101〜T-128 / T-301〜T-314)
 harness/         実ブラウザ検品・フッタ判定規則・字種検査
 docs/            ループごとの所見
 ```
@@ -80,8 +96,10 @@ docs/            ループごとの所見
 ## 使い方
 
 ```bash
-python etl/normalize.py     # raw/perseus → data/works + data/index.json
-python -m pytest -q         # 検査(T-001〜T-016)
+python etl/normalize.py       # raw/perseus → data/works + data/index.json
+python etl/calibrate_turns.py # 発話交替の検出器を較正する(較正 14 篇 / 検証 13 篇)
+python etl/build_turns.py     # → data/turns.json + data/breath.json
+python -m pytest -q           # 検査
 python harness/text_hygiene.py
 
 npm install
@@ -89,9 +107,10 @@ npm run dev                 # 開発サーバ
 npm run verify              # 型検査 + vitest + 静的ビルド + 実ブラウザ検品
 ```
 
-`npm run verify` は 390 / 768 / 1280 px の 3 幅で実際にページを描かせ、
+`npm run verify` は 390 / 768 / 1280 px の 3 幅 × 2 画面で実際にページを描かせ、
 横溢れ・縦の伸びすぎ・固定フッタの高さと逃げ・ラベルの切れ・
-目盛りと格子の本数一致を測る。**検品器自身の陽性対照を先に通してから**走査に入る。
+目盛りと格子の本数一致・面グラフの中身を測る。
+**検品器自身の陽性対照(壊れ方 14 通り)を先に通してから**走査に入る。
 
 ```bash
 npm run deploy       # Vercel 本番へ(CLI 運用)
