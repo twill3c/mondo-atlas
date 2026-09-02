@@ -132,6 +132,17 @@ async function probe(page) {
       hasFraction: [...document.querySelectorAll(".kpi__value")].some((e) =>
         /\d[\d,]*\s*\/\s*\d/.test(e.textContent ?? ""),
       ),
+      // 画面⑥
+      secs: document.querySelectorAll(".sec").length,
+      secCols: document.querySelectorAll(".sec__cols").length,
+      pageNos: document.querySelectorAll(".reader__pageno").length,
+      pagerNums: document.querySelectorAll(".pager__num").length,
+      // 未訳の節が「空欄」として出ているか(0 や空白で埋めていないか)
+      emptyJa: document.querySelectorAll(".sec__ja--empty").length,
+      // 希語の本文が空の節が無いか
+      emptyGrc: [...document.querySelectorAll(".sec__grc")].filter(
+        (e) => (e.textContent ?? "").trim().length === 0,
+      ).length,
       // 帯の幅が 0 のものが無いか(データはすべて正)
       zeroBars: [...document.querySelectorAll(".bar")].filter(
         (b) => b.getBoundingClientRect().width < 1,
@@ -195,6 +206,19 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
     if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
+  } else if (page === "/read/") {
+    // 画面⑥: ステファヌス頁ごとにめくる。開くのは**一頁ぶん**
+    if (r.pageNos !== 1) problems.push(`頁見出しが ${r.pageNos} 個(期待 1 = 一頁ぶんだけ出す)`);
+    if (r.pagerNums !== expected.readerPages) {
+      problems.push(`頁を選ぶ釦が ${r.pagerNums}(期待 ${expected.readerPages})`);
+    }
+    if (r.secs !== expected.readerFirstPage) {
+      problems.push(`初手の頁の節が ${r.secs}(期待 ${expected.readerFirstPage})`);
+    }
+    if (r.secCols !== r.secs) problems.push(`三段の欄が ${r.secCols}(節は ${r.secs})`);
+    if (r.emptyGrc > 0) problems.push(`希語が空の節が ${r.emptyGrc} 件`);
+    // 完訳した篇を初手に出しているので、未訳の空欄は 0 でなければならない
+    if (r.emptyJa !== 0) problems.push(`完訳の篇なのに未訳の空欄が ${r.emptyJa} 件`);
   } else if (page === "/japanese/") {
     // 画面⑤: 36 篇の項目と、充填率の帯
     if (r.jaItems !== expected.works) {
@@ -280,8 +304,17 @@ function selfTest() {
     jaItems: 36,
     meters: 1,
     hasFraction: true,
+    secs: 5,
+    secCols: 5,
+    pageNos: 1,
+    pagerNums: 12,
+    emptyJa: 0,
+    emptyGrc: 0,
   };
-  const expected = { works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4 };
+  const expected = {
+    works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4,
+    readerPages: 12, readerFirstPage: 5,
+  };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
     failures.push("正常な入力を落とした(偽陽性)");
@@ -297,6 +330,9 @@ function selfTest() {
   }
   if (checkAtWidth(1280, ok, expected, "/japanese/").length !== 0) {
     failures.push("画面⑤の正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, ok, expected, "/read/").length !== 0) {
+    failures.push("画面⑥の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -361,10 +397,28 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
+  const readCases = [
+    ["節の欠落", { ...ok, secs: 4 }],
+    ["三段の欄の不足", { ...ok, secCols: 4 }],
+    ["希語が空", { ...ok, emptyGrc: 1 }],
+    ["頁送りが効かず全節が一度に出る", { ...ok, secs: 59, pageNos: 12 }],
+    ["頁を選ぶ釦の欠落", { ...ok, pagerNums: 11 }],
+    ["完訳の篇なのに未訳の空欄", { ...ok, emptyJa: 1 }],
+  ];
+  for (const [name, bad] of readCases) {
+    if (checkAtWidth(1280, bad, expected, "/read/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
   return {
     failures,
     cases:
-      cases.length + breathCases.length + wordCases.length + styleCases.length + jaCases.length,
+      cases.length +
+      breathCases.length +
+      wordCases.length +
+      styleCases.length +
+      jaCases.length +
+      readCases.length,
   };
 }
 
@@ -391,18 +445,27 @@ async function main() {
     process.exit(2);
   }
 
-  const PAGES = ["/", "/breath/", "/words/", "/style/", "/japanese/"];
+  const PAGES = ["/", "/breath/", "/words/", "/style/", "/japanese/", "/read/"];
 
   // 期待値は**実データから導く**。定数で書くと、データが増えたときに検査だけが古くなる
   const index = JSON.parse(readFileSync(join(ROOT, "data", "index.json"), "utf8"));
   const wordsData = JSON.parse(readFileSync(join(ROOT, "data", "words.json"), "utf8"));
   const styleData = JSON.parse(readFileSync(join(ROOT, "data", "style.json"), "utf8"));
+  const readerData = JSON.parse(readFileSync(join(ROOT, "data", "reader.json"), "utf8"));
   const expected = {
     works: index.works.length,
     tetralogies: new Set(index.works.map((w) => w.tetralogy)).size,
     bins: wordsData.bins,
     terms: wordsData.terms.length,
     pages: PAGES.length,
+    // 初手に出るのは最後の篇(クリトン)の第一頁。頁の束は節 ID の頁番号から導く
+    readerPages: new Set(
+      readerData.works.find((w) => w.abbr === "Crit").sections.map((s) => s.page),
+    ).size,
+    readerFirstPage: readerData.works
+      .find((w) => w.abbr === "Crit")
+      .sections.filter((s) => s.page === readerData.works.find((x) => x.abbr === "Crit").sections[0].page)
+      .length,
     late: styleData.lateGroup.length,
     predictions: styleData.predictions.length,
   };
@@ -456,7 +519,9 @@ async function main() {
                 ? `行 ${r.heatRows} / 升目 ${r.heatCells} / 語 ${r.termChips} / 段 ${r.heatLevels}`
                 : pagePath === "/style/"
                   ? `点 ${r.dots} / 後期 ${r.lateDots} / 予測 ${r.predictions} / 横の散り ${r.dotSpreadX}px`
-                  : `篇 ${r.jaItems} / 充填の帯 ${r.meters}`;
+                  : pagePath === "/japanese/"
+                    ? `篇 ${r.jaItems} / 充填の帯 ${r.meters}`
+                    : `頁 ${r.pagerNums} 束 / 開いた頁の節 ${r.secs} / 三段 ${r.secCols}`;
         console.log(
           `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,
@@ -472,16 +537,158 @@ async function main() {
       await page.close();
       }
     }
+
+    // 直リンク(F-09)。**単体試験では見えない** —— 節 ID の解釈も頁の選び直しも
+    // ブラウザの中でしか起きない。「verify は緑なのに開かない」を捕まえる
+    bad += await checkDeepLinks(browser, base, expected);
+
+    // 希語が**実際にどの書体で描かれたか**を見る(HC-134)
+    bad += await checkGreekFont(browser, base);
   } finally {
     await browser.close();
     server?.close();
   }
 
   if (bad) {
-    console.error(`\n${bad} / ${WIDTHS.length * PAGES.length} の組で不合格`);
+    console.error(`\n${bad} 件で不合格(${WIDTHS.length} 幅 × ${PAGES.length} 画面 + 直リンク)`);
     process.exit(1);
   }
-  console.log(`\n全 ${WIDTHS.length} 幅 × ${PAGES.length} 画面で合格`);
+  console.log(`\n全 ${WIDTHS.length} 幅 × ${PAGES.length} 画面 + 直リンクで合格`);
+}
+
+/**
+ * 希語の本文が**どの書体で描かれたか**を実測する(HC-134)。
+ *
+ * CSS の `font-family` に何と書いたかは、実際に何で描かれたかを教えない。
+ * この機の Georgia / Palatino Linotype / Times New Roman / 既定の serif は
+ * 多アクセントの合成済み符号を持たず、アクセントを次の字の後ろに
+ * 独立した点として描いた。**指定は正しいのに字は壊れている**状態で、
+ * 代理指標(高さ・溢れ・要素数)は全部緑のままだった。
+ *
+ * Chrome に「この節点をどの書体で描いたか」を直接聞く。
+ * 同梱の書体ひとつで描き切れていなければ、どこかが代替に落ちている。
+ */
+async function checkGreekFont(browser, base) {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  await page.goto(`${base.replace(/\/$/, "")}/read/`, { waitUntil: "networkidle" });
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send("DOM.enable");
+  await cdp.send("CSS.enable");
+  const { root } = await cdp.send("DOM.getDocument");
+  const { nodeId } = await cdp.send("DOM.querySelector", {
+    nodeId: root.nodeId,
+    selector: ".sec__grc",
+  });
+  const { fonts } = await cdp.send("CSS.getPlatformFontsForNode", { nodeId });
+
+  // **陽性対照** —— 和訳の欄は別の書体で組んである。ここまで同じ答えが返るなら、
+  // この問い合わせは書体を見ていない(定数を返している)
+  const { nodeId: jaId } = await cdp.send("DOM.querySelector", {
+    nodeId: root.nodeId,
+    selector: ".sec__ja",
+  });
+  const ja = (await cdp.send("CSS.getPlatformFontsForNode", { nodeId: jaId })).fonts.filter(
+    (f) => f.glyphCount > 0,
+  );
+  await page.close();
+
+  const problems = [];
+  const used = fonts.filter((f) => f.glyphCount > 0);
+  if (ja.length && used.length && ja.every((f) => /garamond/i.test(f.familyName))) {
+    problems.push("対照が効いていない: 和訳の欄まで同じ書体だと報告された");
+  }
+  if (used.length === 0) {
+    problems.push("希語がひと文字も描かれていない");
+  } else {
+    const main = used.reduce((a, b) => (a.glyphCount >= b.glyphCount ? a : b));
+    if (!/garamond/i.test(main.familyName)) {
+      problems.push(`希語を ${main.familyName} で描いている(同梱の書体に届いていない)`);
+    }
+    // 一部の字だけ代替に落ちるのが**まさに多アクセントの壊れ方**なので、
+    // 「大半が正しい」では通さない。全字が同じ書体で描かれていること
+    const stray = used.filter((f) => f !== main);
+    if (stray.length) {
+      problems.push(
+        "希語の一部が別書体に落ちた: " +
+          stray.map((f) => `${f.familyName}(${f.glyphCount} 字)`).join(" / "),
+      );
+    }
+  }
+  if (problems.length) {
+    console.error("希語の書体 — 不合格");
+    for (const p of problems) console.error("  - " + p);
+    return 1;
+  }
+  console.log(
+    `希語の書体 — OK(${used[0].familyName} ひとつで ${used[0].glyphCount} 字すべてを描いた` +
+      `。対照: 和訳の欄は ${ja.map((f) => f.familyName).join("+") || "不明"})`,
+  );
+  return 0;
+}
+
+/**
+ * 直リンク(F-09)を**実ブラウザで**確かめる。
+ *
+ * 正例だけでなく**壊れた住所**も渡す —— 形の検査を素通りさせていないかは、
+ * 通る例をいくら並べても分からない。壊れた住所では既定の頁に落ちるのが正しい。
+ */
+async function checkDeepLinks(browser, base, expected) {
+  const cases = [
+    // [クエリ, 期待する data-sec(null = 焦点なし), 期待する頁見出しの数字]
+    ["?loc=Crit.51c", "Crit.51c", 51],
+    ["?loc=Crit.43a", "Crit.43a", 43],
+    ["?loc=Ap.17a", "Ap.17a", 17], // 未訳の篇でも住所は通る
+    ["?loc=%3Cscript%3E", null, null], // 形の検査で落ちる
+    ["?loc=Crit.99z", null, null], // 形が違う
+    ["?loc=Rep.327a", null, null], // 形は正しいがリーダーに載せていない篇
+    ["", null, null],
+  ];
+  let bad = 0;
+  for (const [query, wantSec, wantPage] of cases) {
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    const errors = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    await page.goto(`${base.replace(/\/$/, "")}/read/${query}`, { waitUntil: "networkidle" });
+    const r = await page.evaluate(() => ({
+      focus: document.querySelector(".sec--focus")?.getAttribute("data-sec") ?? null,
+      nFocus: document.querySelectorAll(".sec--focus").length,
+      pageno: document.querySelector(".reader__pageno")?.textContent ?? "",
+      heading: document.querySelector("#read-heading")?.textContent ?? "",
+      secs: document.querySelectorAll(".sec").length,
+      // 焦点の節が画面の中に入っているか(飛んだつもりで飛んでいないのを捕まえる)
+      inView: (() => {
+        const el = document.querySelector(".sec--focus");
+        if (!el) return null;
+        const b = el.getBoundingClientRect();
+        return b.top < window.innerHeight && b.bottom > 0;
+      })(),
+    }));
+    const problems = [];
+    if (errors.length) problems.push(`JS エラー: ${errors.join(" / ")}`);
+    if (r.secs === 0) problems.push("節がひとつも出ていない");
+    if (r.nFocus > 1) problems.push(`焦点が ${r.nFocus} 個(期待 1 以下)`);
+    if (wantSec === null) {
+      if (r.focus !== null) problems.push(`壊れた住所で ${r.focus} に飛んだ(既定の頁に落ちるべき)`);
+    } else {
+      if (r.focus !== wantSec) problems.push(`焦点が ${r.focus}(期待 ${wantSec})`);
+      if (!r.pageno.includes(String(wantPage))) {
+        problems.push(`開いた頁が「${r.pageno.trim()}」(期待 ${wantPage} 頁)`);
+      }
+      if (r.inView !== true) problems.push("焦点の節が画面の中に来ていない");
+    }
+    if (problems.length) {
+      bad++;
+      console.error(`直リンク /read/${query} — 不合格`);
+      for (const p of problems) console.error("  - " + p);
+    } else {
+      console.log(
+        `直リンク /read/${query || "(なし)"} — OK` +
+          (wantSec ? `(${r.focus} を ${wantPage} 頁で開いた)` : "(既定の頁に落ちた)"),
+      );
+    }
+    await page.close();
+  }
+  return bad;
 }
 
 main().catch((e) => {

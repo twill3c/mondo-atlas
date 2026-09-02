@@ -369,12 +369,15 @@ h2 {
 
 .nav {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.25rem;
   max-width: 60rem;
   margin: 0 auto;
   padding: 0.9rem 1.25rem 0;
 }
 
+/* 画面が六つになって、狭い幅では一項目が三行に折れていた。
+   項目の中で折らず、**行の方を折る** */
 .nav__item {
   font-size: 0.86rem;
   padding: 0.35rem 0.8rem;
@@ -382,6 +385,7 @@ h2 {
   text-decoration: none;
   color: var(--text-secondary);
   border: 1px solid transparent;
+  white-space: nowrap;
 }
 
 .nav__item:hover {
@@ -1045,3 +1049,146 @@ h2 {
   font-size: 0.78rem;
   text-align: right;
 }
+
+/* ------------------------------------------------------- 画面⑥(読む) */
+
+.reader { margin-top: 1rem; }
+
+.reader__page {
+  border-top: 1px solid var(--border);
+  padding-top: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.reader__pageno {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+.sec {
+  display: grid;
+  grid-template-columns: 2.8rem minmax(0, 1fr);
+  gap: 0 0.6rem;
+  padding: 0.5rem 0.5rem 0.5rem 0;
+  border-radius: 6px;
+  scroll-margin-top: 3rem;
+}
+
+.sec--focus { background: color-mix(in srgb, var(--series-1) 12%, transparent); }
+
+.sec__id {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  text-decoration: none;
+  padding-top: 0.15rem;
+}
+
+.sec__id:hover { color: var(--series-1); text-decoration: underline; }
+
+.sec__cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem 1rem;
+}
+
+@media (max-width: 60rem) {
+  .sec__cols { grid-template-columns: 1fr; }
+}
+
+.sec__grc,
+.sec__eng,
+.sec__ja {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.75;
+}
+
+.sec__grc {
+  /* 同梱の EB Garamond。多アクセントの合成済み符号を持つ書体でないと、
+     アクセントが次の字の後ろに独立した点として出る(実測) */
+  font-family: var(--font-greek), Cambria, "Times New Roman", serif;
+  font-size: 1.02rem;
+  color: var(--text-primary);
+}
+
+.sec__eng { color: var(--text-secondary); }
+
+.sec__ja { color: var(--text-primary); }
+
+/* 未訳は**空欄として見せる**。ゼロや空白で埋めない(HC-119) */
+.sec__ja--empty {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.sec--untranslated { background: color-mix(in srgb, var(--text-muted) 5%, transparent); }
+
+/* 頁送り。めくる単位はステファヌス頁(住所の単位とそろえる) */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin: 0.8rem 0 0.4rem;
+}
+
+.pager button {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.pager button:disabled { color: var(--text-muted); cursor: default; }
+.pager button:not(:disabled):hover { border-color: var(--series-1); }
+
+.pager__now {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.pager__of { font-size: 0.72rem; color: var(--text-muted); }
+
+.pager__jump {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.pager__num {
+  font: inherit;
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  min-width: 2.2rem;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.pager__num[aria-pressed="true"] {
+  border-color: var(--series-1);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--series-1) 14%, transparent);
+}
+
+/* まだ訳の無い頁は控えめに。**隠さない** —— 訳が無いことも情報 */
+.pager__num--none { color: var(--text-muted); border-style: dashed; }
+
+/* 住所の例(?loc=Crit.43a)は途中で折らない。折れると住所に見えない */
+.lede code { white-space: nowrap; }

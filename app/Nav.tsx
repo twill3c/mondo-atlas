@@ -9,6 +9,7 @@ const PAGES = [
   { href: "/words/", label: "語の地層" },
   { href: "/style/", label: "文体の指紋" },
   { href: "/japanese/", label: "和訳" },
+  { href: "/read/", label: "読む" },
 ];
 
 export default function Nav() {
