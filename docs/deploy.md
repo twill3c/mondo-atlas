@@ -48,6 +48,21 @@ node etl/explore/pruned_build_check.mjs <作業ディレクトリ>
 - 一日に何本も出す日は、**app-menu への掲載を先に済ませる**
   —— 本体を出してからカードを足すと、上限に当たったとき掲載だけが取り残される
 
+**2026-09-02、この順序を守らずに実際に取り残された。**
+本体(L2〜L7)を出したあとに app-menu のカードを push したところ、
+GitHub の commit status が `Deployment rate limited — retry in 24 hours` で failure になり、
+CLI も `api-deployments-free-per-day` で拒否された。
+カードは `origin/main` に載っている(app-menu `84535ea`)が本番には出ていない。
+**枠が空いたあとに app-menu で一度デプロイする**必要がある。
+
+上限に当たったかどうかは、待つのではなく**GitHub の commit status を読む**と即座に分かる:
+
+```bash
+gh api repos/twill3c/app-menu/commits/<sha>/status   --jq '.statuses[] | "\(.state) | \(.description)"'
+```
+
+`vercel ls` の Age を見て「まだ来ていないだけか」と待つより速い(この日は 10 分無駄にした)。
+
 ## 本番の検品を手元の検品と別に持つ
 
 `npm run smoke` は `out/` を、`npm run smoke:prod` は**配られているもの**を見る。
