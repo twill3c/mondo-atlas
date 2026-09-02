@@ -568,6 +568,125 @@ h2 {
   font-weight: 600;
 }
 
+/* ------------------------------------------------- 画面③(語の地層) */
+
+/*
+ * 濃さの段は**単一色相の濃淡**(dataviz: 量を表すなら sequential)。
+ * 地の色に対する不透明度で作るので、明暗どちらのテーマでも
+ * 「薄い = 地に近い / 濃い = はっきり」が自動的に成り立つ。
+ */
+.swatch--l1 { background: color-mix(in srgb, var(--series-1) 16%, transparent); }
+.swatch--l2 { background: color-mix(in srgb, var(--series-1) 34%, transparent); }
+.swatch--l3 { background: color-mix(in srgb, var(--series-1) 55%, transparent); }
+.swatch--l4 { background: color-mix(in srgb, var(--series-1) 78%, transparent); }
+.swatch--l5 { background: var(--series-1); }
+
+.legend--scale {
+  align-items: center;
+  gap: 0.25rem 0.5rem;
+}
+
+.legend--scale .swatch {
+  border-radius: 2px;
+  border: 1px solid var(--border);
+}
+
+/* 凡例の注記は折り返す。nowrap を効かせると狭い幅で横に溢れる(390px で実測) */
+.legend__note {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  max-width: 100%;
+  flex-basis: 100%;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  max-width: 46rem;
+}
+
+.chip {
+  font: inherit;
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  padding: 0.28rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-1);
+  color: var(--text-secondary);
+  cursor: pointer;
+  min-height: 2rem;
+}
+
+.chip:hover { border-color: var(--text-muted); }
+
+.chip[aria-pressed="true"] {
+  background: var(--text-primary);
+  color: var(--surface-1);
+  border-color: var(--text-primary);
+}
+
+.chip__grc {
+  font-size: 0.95rem;
+  /* 外部フォントは読み込まない(ビルドをネットワーク非依存に保つ — SPEC N-02)。
+     ギリシャ文字は環境のセリフ体で十分に読める */
+  font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+}
+
+.chip__ja { font-size: 0.72rem; opacity: 0.8; }
+
+.heat {
+  display: grid;
+  gap: 2px;
+  min-width: 32rem;
+}
+
+.heat__row {
+  display: grid;
+  grid-template-columns: 9rem minmax(0, 1fr) 2.6rem;
+  align-items: center;
+  gap: 0 0.5rem;
+}
+
+.heat__name {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.heat__cells {
+  display: grid;
+  grid-template-columns: repeat(var(--bins), 1fr);
+  gap: 1px;
+}
+
+.heat__cell {
+  height: 0.85rem;
+  border-radius: 1px;
+  background: color-mix(in srgb, var(--text-muted) 8%, transparent);
+}
+
+.heat__cell--l1 { background: color-mix(in srgb, var(--series-1) 16%, transparent); }
+.heat__cell--l2 { background: color-mix(in srgb, var(--series-1) 34%, transparent); }
+.heat__cell--l3 { background: color-mix(in srgb, var(--series-1) 55%, transparent); }
+.heat__cell--l4 { background: color-mix(in srgb, var(--series-1) 78%, transparent); }
+.heat__cell--l5 { background: var(--series-1); }
+
+.heat__rate {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.grc { font-family: Georgia, "Times New Roman", "Noto Serif", serif; font-size: 1.05em; }
+
 /* ------------------------------------------------------------------ 補足 */
 
 .note {

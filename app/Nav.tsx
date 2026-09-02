@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const PAGES = [
   { href: "/", label: "全集の俯瞰" },
   { href: "/breath/", label: "問答の呼吸" },
+  { href: "/words/", label: "語の地層" },
 ];
 
 export default function Nav() {

@@ -104,6 +104,16 @@ async function probe(page) {
       emptyPaths: [...document.querySelectorAll(".breath__area, .breath__line")].filter(
         (p) => (p.getAttribute("d") ?? "").length < 20,
       ).length,
+      // 画面③
+      heatRows: document.querySelectorAll(".heat__row").length,
+      heatCells: document.querySelectorAll(".heat__cell").length,
+      termChips: document.querySelectorAll(".chip").length,
+      // 段が全部同じなら、色が何も表していない
+      heatLevels: new Set(
+        [...document.querySelectorAll(".heat__cell")].map(
+          (c) => [...c.classList].find((x) => x.startsWith("heat__cell--")) ?? "l0",
+        ),
+      ).size,
       // 帯の幅が 0 のものが無いか(データはすべて正)
       zeroBars: [...document.querySelectorAll(".bar")].filter(
         (b) => b.getBoundingClientRect().width < 1,
@@ -143,7 +153,9 @@ function checkAtWidth(width, r, expected, page = "/") {
       );
     }
   }
-  if (r.navItems !== 2) problems.push(`画面の切り替えが ${r.navItems} 個(期待 2)`);
+  if (r.navItems !== expected.pages) {
+    problems.push(`画面の切り替えが ${r.navItems} 個(期待 ${expected.pages})`);
+  }
 
   if (page === "/") {
     if (r.bars !== expected.works) problems.push(`帯が ${r.bars} 本(期待 ${expected.works})`);
@@ -155,7 +167,7 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.ticks < 2) problems.push(`目盛りが ${r.ticks} 本しか無い`);
     if (r.zeroBars > 0) problems.push(`幅 0 の帯が ${r.zeroBars} 本ある`);
-  } else {
+  } else if (page === "/breath/") {
     // 画面②: 36 篇ぶんのスパークライン + 主図の面と線
     if (r.sparks !== expected.works) {
       problems.push(`スパークラインが ${r.sparks} 個(期待 ${expected.works})`);
@@ -165,6 +177,21 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
     if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
+  } else {
+    // 画面③: 36 篇 × 区間の升目
+    if (r.heatRows !== expected.works) {
+      problems.push(`地層の行が ${r.heatRows}(期待 ${expected.works})`);
+    }
+    if (r.heatCells !== expected.works * expected.bins) {
+      problems.push(
+        `升目が ${r.heatCells}(期待 ${expected.works * expected.bins} = ${expected.works} × ${expected.bins})`,
+      );
+    }
+    if (r.termChips !== expected.terms) {
+      problems.push(`見出し語が ${r.termChips}(期待 ${expected.terms})`);
+    }
+    // 色が何も表していない状態を捕まえる
+    if (r.heatLevels < 3) problems.push(`升目の段が ${r.heatLevels} 種類しかない`);
   }
   if (r.clippedLabels?.length) {
     problems.push(`ラベルが切れている ${r.clippedLabels.length} 件: ${r.clippedLabels.slice(0, 4).join(" / ")}`);
@@ -205,16 +232,23 @@ function selfTest() {
     sparks: 36,
     breathPaths: 37,
     trustBanners: 1,
-    navItems: 2,
+    navItems: 3,
     emptyPaths: 0,
+    heatRows: 36,
+    heatCells: 36 * 40,
+    termChips: 14,
+    heatLevels: 5,
   };
-  const expected = { works: 36, tetralogies: 9 };
+  const expected = { works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 3 };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
     failures.push("正常な入力を落とした(偽陽性)");
   }
   if (checkAtWidth(1280, ok, expected, "/breath/").length !== 0) {
     failures.push("画面②の正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, ok, expected, "/words/").length !== 0) {
+    failures.push("画面③の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -245,7 +279,19 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
-  return { failures, cases: cases.length + breathCases.length };
+  // 画面③側の対照
+  const wordCases = [
+    ["地層の行の欠落", { ...ok, heatRows: 35 }],
+    ["升目の数違い", { ...ok, heatCells: 36 * 39 }],
+    ["見出し語の欠落", { ...ok, termChips: 13 }],
+    ["色が一様", { ...ok, heatLevels: 1 }],
+  ];
+  for (const [name, bad] of wordCases) {
+    if (checkAtWidth(1280, bad, expected, "/words/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
+  return { failures, cases: cases.length + breathCases.length + wordCases.length };
 }
 
 async function main() {
@@ -271,10 +317,17 @@ async function main() {
     process.exit(2);
   }
 
+  const PAGES = ["/", "/breath/", "/words/"];
+
+  // 期待値は**実データから導く**。定数で書くと、データが増えたときに検査だけが古くなる
   const index = JSON.parse(readFileSync(join(ROOT, "data", "index.json"), "utf8"));
+  const wordsData = JSON.parse(readFileSync(join(ROOT, "data", "words.json"), "utf8"));
   const expected = {
     works: index.works.length,
     tetralogies: new Set(index.works.map((w) => w.tetralogy)).size,
+    bins: wordsData.bins,
+    terms: wordsData.terms.length,
+    pages: PAGES.length,
   };
 
   const server = liveBase ? null : await serve(OUT);
@@ -283,7 +336,6 @@ async function main() {
   const browser = await chromium.launch();
   let bad = 0;
 
-  const PAGES = ["/", "/breath/"];
 
   try {
     for (const width of WIDTHS) {
@@ -321,7 +373,9 @@ async function main() {
         const detail =
           pagePath === "/"
             ? `帯 ${r.bars} / 見出し ${r.tetralogyHeads} / 目盛り ${r.ticks}`
-            : `一覧 ${r.sparks} / 面 ${r.breathPaths} / 断り ${r.trustBanners}`;
+            : pagePath === "/breath/"
+              ? `一覧 ${r.sparks} / 面 ${r.breathPaths} / 断り ${r.trustBanners}`
+              : `行 ${r.heatRows} / 升目 ${r.heatCells} / 語 ${r.termChips} / 段 ${r.heatLevels}`;
         console.log(
           `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,

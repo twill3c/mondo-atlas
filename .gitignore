@@ -22,3 +22,4 @@ shot-*.png
 # 画面②を作るループでコミットに切り替える。
 data/turns.json
 # data/breath.json は画面②の材料(106KB)。ビルド時 import するのでコミットする
+# data/words.json は画面③の材料(108KB)。ビルド時 import するのでコミットする
