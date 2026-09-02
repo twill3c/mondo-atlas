@@ -52,8 +52,12 @@ node etl/explore/pruned_build_check.mjs <作業ディレクトリ>
 本体(L2〜L7)を出したあとに app-menu のカードを push したところ、
 GitHub の commit status が `Deployment rate limited — retry in 24 hours` で failure になり、
 CLI も `api-deployments-free-per-day` で拒否された。
-カードは `origin/main` に載っている(app-menu `84535ea`)が本番には出ていない。
-**枠が空いたあとに app-menu で一度デプロイする**必要がある。
+カードは `origin/main` に載っている(app-menu `84535ea`)が本番には出ていなかった。
+
+**翌 2026-09-03、枠が空いて CLI 一回で出た。**push し直しは不要で、
+`vercel deploy --prod --yes --scope ... --archive=tgz` だけでよい。
+上限は「一日一回」ではなく **24 時間の移動窓で枠が一つずつ空く**ので、
+日付が変わるのを待つ必要も必ずしもない。
 
 上限に当たったかどうかは、待つのではなく**GitHub の commit status を読む**と即座に分かる:
 
