@@ -11,9 +11,7 @@ Perseus Digital Library のプラトン全集 36 篇を、**ステファヌス�
 **L7 完了(2026-09-02)** —— データの取得・正規化・検査と、画面が 6 つ。
 **①全集の俯瞰 / ②問答の呼吸 / ③語の地層 / ④文体の指紋 / ⑤和訳 / ⑥読む**。
 
-**本番は L1 のまま。L2〜L7 は未デプロイ。**
-
-本番: **https://mondo-atlas-coral.vercel.app/**
+本番: **https://mondo-atlas-coral.vercel.app/**(L7 まで反映済み・2026-09-02)
 
 Next.js の静的出力。**serverless function ゼロ・cron ゼロ**(底本が改訂されないので更新経路を持たない)。
 デプロイは CLI 運用(`npm run deploy`)。GitHub 連携は張っていないので、push では本番は変わらない。

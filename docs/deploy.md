@@ -59,6 +59,22 @@ node etl/explore/pruned_build_check.mjs <作業ディレクトリ>
 
 判定に `vercel ls` を使わない。Age 列が実際と大きくずれることがある。
 
+## 書体を配るなら、配られていることを確かめる
+
+画面⑥は希語を**同梱の書体**(`public/fonts/*.woff2`)で組む。
+`npm run smoke:prod` の字形検査は「EB Garamond で描かれた」としか言わないので、
+**その機に同名の書体が入っていれば、配信が 404 でも緑になる**。
+本番では別に確かめる:
+
+```bash
+curl -sS -o /dev/null -w "%{http_code} %{content_type} %{size_download}
+"   https://mondo-atlas-coral.vercel.app/fonts/ebgaramond-greek-ext.woff2
+```
+
+2026-09-02 実測: 三つとも `200 font/woff2`(6,464 / 10,752 / 23,820 B)。
+この機に Garamond 系のシステム書体が無いことも確認したので、
+描いたのは**配られた実体**である。
+
 ## 実測(2026-09-02 初回デプロイ)
 
 | 項目 | 値 |
@@ -66,3 +82,12 @@ node etl/explore/pruned_build_check.mjs <作業ディレクトリ>
 | デプロイ ID | `dpl_AZMvviakrtCVxrwjfX6sMGQCWHrF` |
 | 本番 | https://mondo-atlas-coral.vercel.app/ |
 | 検品 | 390 / 768 / 1280 px の 3 幅すべて合格、Content-Type は `text/html` |
+
+## 実測(2026-09-02 二回目・L2〜L7 の反映)
+
+| 項目 | 値 |
+|---|---|
+| デプロイ ID | `dpl_4wYZ7aoJJJDC8u2efjjYAeM821zr` |
+| 本番 | https://mondo-atlas-coral.vercel.app/ |
+| 検品 | 3 幅 × **6 画面** + 直リンク 7 件 + 字形 1 件、すべて合格 |
+| 書体 | `/fonts/*.woff2` 三つが `200 font/woff2` で配られている |
