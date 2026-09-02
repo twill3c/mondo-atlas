@@ -114,6 +114,17 @@ async function probe(page) {
           (c) => [...c.classList].find((x) => x.startsWith("heat__cell--")) ?? "l0",
         ),
       ).size,
+      // 画面④
+      dots: document.querySelectorAll(".dot").length,
+      lateDots: document.querySelectorAll(".dot--late").length,
+      predictions: document.querySelectorAll(".prediction").length,
+      // 点が一箇所に固まっていたら、軸が効いていない
+      dotSpreadX: (() => {
+        const xs = [...document.querySelectorAll(".dot")].map(
+          (d) => d.getBoundingClientRect().left,
+        );
+        return xs.length ? Math.round(Math.max(...xs) - Math.min(...xs)) : 0;
+      })(),
       // 帯の幅が 0 のものが無いか(データはすべて正)
       zeroBars: [...document.querySelectorAll(".bar")].filter(
         (b) => b.getBoundingClientRect().width < 1,
@@ -177,6 +188,16 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
     if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
+  } else if (page === "/style/") {
+    // 画面④: 36 篇の点と、宣言した予測
+    if (r.dots !== expected.works) problems.push(`点が ${r.dots} 個(期待 ${expected.works})`);
+    if (r.lateDots !== expected.late) {
+      problems.push(`後期群の点が ${r.lateDots} 個(期待 ${expected.late})`);
+    }
+    if (r.predictions !== expected.predictions) {
+      problems.push(`予測が ${r.predictions} 件(期待 ${expected.predictions})`);
+    }
+    if (r.dotSpreadX < 100) problems.push(`点が横に ${r.dotSpreadX}px しか散っていない`);
   } else {
     // 画面③: 36 篇 × 区間の升目
     if (r.heatRows !== expected.works) {
@@ -232,14 +253,18 @@ function selfTest() {
     sparks: 36,
     breathPaths: 37,
     trustBanners: 1,
-    navItems: 3,
+    navItems: 4,
     emptyPaths: 0,
     heatRows: 36,
     heatCells: 36 * 40,
     termChips: 14,
     heatLevels: 5,
+    dots: 36,
+    lateDots: 6,
+    predictions: 4,
+    dotSpreadX: 600,
   };
-  const expected = { works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 3 };
+  const expected = { works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4 };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
     failures.push("正常な入力を落とした(偽陽性)");
@@ -249,6 +274,9 @@ function selfTest() {
   }
   if (checkAtWidth(1280, ok, expected, "/words/").length !== 0) {
     failures.push("画面③の正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, ok, expected, "/style/").length !== 0) {
+    failures.push("画面④の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -291,7 +319,22 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
-  return { failures, cases: cases.length + breathCases.length + wordCases.length };
+  // 画面④側の対照
+  const styleCases = [
+    ["点の欠落", { ...ok, dots: 35 }],
+    ["後期群の印の欠落", { ...ok, lateDots: 5 }],
+    ["予測の欠落", { ...ok, predictions: 3 }],
+    ["点が散らない", { ...ok, dotSpreadX: 20 }],
+  ];
+  for (const [name, bad] of styleCases) {
+    if (checkAtWidth(1280, bad, expected, "/style/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
+  return {
+    failures,
+    cases: cases.length + breathCases.length + wordCases.length + styleCases.length,
+  };
 }
 
 async function main() {
@@ -317,17 +360,20 @@ async function main() {
     process.exit(2);
   }
 
-  const PAGES = ["/", "/breath/", "/words/"];
+  const PAGES = ["/", "/breath/", "/words/", "/style/"];
 
   // 期待値は**実データから導く**。定数で書くと、データが増えたときに検査だけが古くなる
   const index = JSON.parse(readFileSync(join(ROOT, "data", "index.json"), "utf8"));
   const wordsData = JSON.parse(readFileSync(join(ROOT, "data", "words.json"), "utf8"));
+  const styleData = JSON.parse(readFileSync(join(ROOT, "data", "style.json"), "utf8"));
   const expected = {
     works: index.works.length,
     tetralogies: new Set(index.works.map((w) => w.tetralogy)).size,
     bins: wordsData.bins,
     terms: wordsData.terms.length,
     pages: PAGES.length,
+    late: styleData.lateGroup.length,
+    predictions: styleData.predictions.length,
   };
 
   const server = liveBase ? null : await serve(OUT);
@@ -375,7 +421,9 @@ async function main() {
             ? `帯 ${r.bars} / 見出し ${r.tetralogyHeads} / 目盛り ${r.ticks}`
             : pagePath === "/breath/"
               ? `一覧 ${r.sparks} / 面 ${r.breathPaths} / 断り ${r.trustBanners}`
-              : `行 ${r.heatRows} / 升目 ${r.heatCells} / 語 ${r.termChips} / 段 ${r.heatLevels}`;
+              : pagePath === "/words/"
+                ? `行 ${r.heatRows} / 升目 ${r.heatCells} / 語 ${r.termChips} / 段 ${r.heatLevels}`
+                : `点 ${r.dots} / 後期 ${r.lateDots} / 予測 ${r.predictions} / 横の散り ${r.dotSpreadX}px`;
         console.log(
           `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,

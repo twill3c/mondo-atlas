@@ -687,6 +687,189 @@ h2 {
 
 .grc { font-family: Georgia, "Times New Roman", "Noto Serif", serif; font-size: 1.05em; }
 
+/* ------------------------------------------------- 画面④(文体の指紋) */
+
+.predictions {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.prediction {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: baseline;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.6rem 0.85rem;
+  font-size: 0.88rem;
+}
+
+.prediction__badge {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+}
+
+/* 「成立/不成立」は SPEC の述語(予測が当たったか)に対応する判定なので記号を出してよい */
+.prediction__badge--ok { background: var(--series-1); color: var(--surface-1); }
+.prediction__badge--ng { background: var(--series-2); color: var(--surface-1); }
+
+.prediction__detail {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 0.15rem;
+}
+
+.scatter {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr);
+  grid-template-areas: "y plot" ". x";
+  gap: 0 0.5rem;
+  min-width: 30rem;
+}
+
+.scatter__yaxis {
+  grid-area: y;
+  position: relative;
+}
+
+.scatter__yaxis span {
+  position: absolute;
+  right: 0;
+  transform: translateY(50%);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.scatter__plot {
+  grid-area: plot;
+  position: relative;
+  border-left: 1px solid var(--axis);
+  border-bottom: 1px solid var(--axis);
+}
+
+.scatter__grid {
+  position: absolute;
+  background: var(--grid);
+}
+
+.scatter__grid--h { left: 0; right: 0; height: 1px; }
+.scatter__grid--v { top: 0; bottom: 0; width: 1px; }
+
+.scatter__xaxis {
+  grid-area: x;
+  position: relative;
+  height: 1.2rem;
+}
+
+.scatter__xaxis span {
+  position: absolute;
+  transform: translateX(-50%);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dot {
+  position: absolute;
+  transform: translate(-50%, 50%);
+  width: 0.7rem;
+  height: 0.7rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  background: var(--text-muted);
+}
+
+.dot--late { background: var(--series-1); width: 0.85rem; height: 0.85rem; }
+.dot--other { background: color-mix(in srgb, var(--text-muted) 55%, transparent); }
+/* 件数が少なく縦の位置が不安定な篇は**中を抜く**。色ではなく形で分ける */
+.dot--weak { background: transparent; border-color: var(--text-muted); }
+.dot--late.dot--weak { border-color: var(--series-1); }
+
+.dot:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+.dot__label {
+  position: absolute;
+  left: 50%;
+  bottom: 110%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 常時表示にすると、点が固まっている領域で文字が重なって読めない(目視で確認)。
+   後期 6 篇の名前は図の下の一覧で出す。 */
+.dot--on .dot__label,
+.dot:hover .dot__label,
+.dot:focus-visible .dot__label {
+  opacity: 1;
+}
+
+.late-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.9rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12.5rem, 1fr));
+  gap: 0.4rem;
+}
+
+.late-list li {
+  display: grid;
+  grid-template-columns: 0.6rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.35rem 0.6rem;
+}
+
+.late-list__mark {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--series-1);
+}
+
+.late-list__num {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dot--on { z-index: 3; }
+.dot--late { z-index: 2; }
+
+.swatch--muted { background: color-mix(in srgb, var(--text-muted) 55%, transparent); }
+.swatch--weak {
+  background: transparent;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 50%;
+}
+
 /* ------------------------------------------------------------------ 補足 */
 
 .note {
