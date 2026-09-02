@@ -6,6 +6,8 @@
  * —— 訳の側から数えると、原文から落ちた節は永遠に見えない。
  */
 
+import { readFileSync, readdirSync, statSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import reader from "../data/reader.json";
 import tr from "../data/curated/translation.json";
@@ -71,6 +73,52 @@ describe("配られるデータ", () => {
       expect(s.grc.length).toBeGreaterThan(0);
       expect(isUntranslated(s)).toBe(true);
     }
+  });
+});
+
+describe("同梱の書体(N-02 / G-16)", () => {
+  function walk(dir: string): string[] {
+    return readdirSync(dir).flatMap((n) => {
+      const p = join(dir, n);
+      return statSync(p).isDirectory() ? walk(p) : [p];
+    });
+  }
+
+  it("T-714 ビルドが外へ書体を取りに行かない", () => {
+    // next/font/google はビルド時に fonts.googleapis.com へ取りに行く。
+    // N-02(ビルドはネットワーク非依存)に反するので、使っていないことを検査する。
+    // **同梱に切り替えたことを覚えているかどうかに頼らない** —— 書き戻せば落ちる
+    const IMPORT = /(?:from|require\()\s*["']next\/font\/google["']/;
+    // 陽性対照: この検査が「書いてあれば撃つ」ことを先に確かめる。
+    // 素通しにすると、走査の側が壊れていても緑になる
+    expect(IMPORT.test('import { EB_Garamond } from "next/font/google";')).toBe(true);
+    // 文中で名前に触れているだけの注記は撃たない
+    expect(IMPORT.test("/* next/font/google は使わない */")).toBe(false);
+
+    const sources = [...walk("app"), ...walk("lib")].filter((p) => /\.(tsx?|css)$/.test(p));
+    expect(sources.length).toBeGreaterThan(5);
+    expect(sources.filter((p) => IMPORT.test(readFileSync(p, "utf8")))).toEqual([]);
+  });
+
+  it("T-715 希語に要る部分集合が同梱され、字形の実体を持つ", () => {
+    // 多アクセントは greek-ext(U+1F00-1FFF)に入る。ここが欠けると
+    // アクセントが次の字の後ろに独立した点として出る(HC-134 の故障)
+    for (const n of ["greek-ext", "greek", "latin"]) {
+      const b = readFileSync(join("public", "fonts", `ebgaramond-${n}.woff2`));
+      expect(b.subarray(0, 4).toString("latin1"), n).toBe("wOF2");
+      expect(b.length, n).toBeGreaterThan(2000);
+    }
+    // 配るなら license も配る
+    const ofl = readFileSync(join("public", "fonts", "OFL.txt"), "utf8");
+    expect(ofl).toContain("SIL OPEN FONT LICENSE");
+  });
+
+  it("T-716 CSS が同梱の書体を参照し、多アクセントの範囲を覆う", () => {
+    const css = readFileSync(join("app", "globals.css"), "utf8");
+    expect(css).toContain('url("/fonts/ebgaramond-greek-ext.woff2")');
+    expect(css).toContain("U+1F00-1FFF");
+    // 希語欄が実際にこの書体を指していること
+    expect(css).toMatch(/\.sec__grc\s*\{[^}]*"EB Garamond Local"/s);
   });
 });
 

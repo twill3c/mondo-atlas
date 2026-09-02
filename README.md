@@ -152,7 +152,8 @@ Next.js の静的出力。**serverless function ゼロ・cron ゼロ**(底本が
 
 六つ実測して、この機で正しく描けたのは **Cambria だけ**だった。
 Georgia も Palatino Linotype も Times New Roman も Segoe UI も既定の serif も壊れた。
-読み手の機械に何が入っているかは当てにできないので、書体を同梱することにした。
+読み手の機械に何が入っているかは当てにできないので、書体を同梱することにした
+(`public/fonts/` に woff2 三つと OFL。**ビルドで外へ取りに行かない** —— N-02)。
 
 問題は**検品が全部緑だった**ことである。高さも横溢れも要素数も JS エラーも異常なし。
 検品が見ていたのは**字が置かれた場所**であって、**字の形**ではなかった。
@@ -180,8 +181,9 @@ data/reader.json 画面⑥の材料(391KB・希英和の本文・コミットす
 etl/             正規化器・発話交替の検出器・語形の照合・較正・調査スクリプト
 app/ lib/        Next.js(静的出力)と図の幾何
 tests/           Python 側の検査(T-001〜T-016 / T-201〜T-217)
-tests-js/        図とフッタ規則の検査(T-101〜T-128 / T-301〜T-314 / T-401〜T-413 / T-501〜T-513 / T-601〜T-611 / T-701〜T-713)
+tests-js/        図とフッタ規則の検査(T-101〜T-128 / T-301〜T-314 / T-401〜T-413 / T-501〜T-513 / T-601〜T-611 / T-701〜T-716)
 harness/         実ブラウザ検品・フッタ判定規則・字種検査
+public/fonts/    同梱の EB Garamond(希語用・OFL 1.1)。ビルドで外へ取りに行かない
 docs/            ループごとの所見
 ```
 
@@ -208,10 +210,12 @@ npm run dev                 # 開発サーバ
 npm run verify              # 型検査 + vitest + 静的ビルド + 実ブラウザ検品
 ```
 
-`npm run verify` は 390 / 768 / 1280 px の 3 幅 × 5 画面で実際にページを描かせ、
+`npm run verify` は 390 / 768 / 1280 px の 3 幅 × 6 画面で実際にページを描かせ、
 横溢れ・縦の伸びすぎ・固定フッタの高さと逃げ・ラベルの切れ・
 目盛りと格子の本数一致・面グラフの中身・升目の段数を測る。
-**検品器自身の陽性対照(壊れ方 25 通り)を先に通してから**走査に入る。
+さらに**節への直リンク 7 件(壊れた住所 4 件を含む)**と、
+**希語を実際に何の書体で描いたか**(CDP・和訳欄が陽性対照)を見る。
+**検品器自身の陽性対照(壊れ方 31 通り)を先に通してから**走査に入る。
 
 ```bash
 npm run deploy       # Vercel 本番へ(CLI 運用)
@@ -226,6 +230,7 @@ npm run smoke:prod   # 本番 URL に対して同じ検品を掛ける
 - ギリシャ語本文: John Burnet (ed.), *Platonis Opera*, Oxford: Clarendon Press, 1900–1907
 - 英訳: Fowler / Lamb ほか, *Plato in Twelve Volumes*, Loeb Classical Library, 1914–
 - データ提供: [Perseus Digital Library](https://github.com/PerseusDL/canonical-greekLit)(Tufts University)
+- 書体: [EB Garamond](https://github.com/octaviopardo/EBGaramond12)(SIL Open Font License 1.1・`public/fonts/OFL.txt`)
 
 Perseus のデータは **CC BY-SA 4.0**。本リポジトリの**派生データおよび和訳もこれを継承する**。
 コードのみ MIT(`LICENSE`)。

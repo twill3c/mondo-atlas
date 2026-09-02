@@ -1,4 +1,51 @@
 /*
+ * ギリシャ語の本文だけは**同梱の書体で組む**(HC-134)。
+ *
+ * この機で実測したところ、Georgia / Palatino Linotype / Times New Roman /
+ * Segoe UI / 既定の serif はいずれも多アクセント(polytonic)の合成済み符号
+ * —— たとえば U+1F76 —— を持たず、代替書体に落ちて
+ * **アクセントを次の字の後ろに独立した点として描いた**。
+ * データは正しく合成済みなので、これは字形の問題であって本文の問題ではない。
+ * 読み手の機械に何が入っているかは当てにできないので、書体を持って行く。
+ *
+ * ファイルは `public/fonts/` に**リポジトリへ固定**してある。
+ * next/font/google はビルド時に取りに行くので使わない —— N-02(ビルドはネットワーク非依存)。
+ * 上流の版が変わっても、この企画が配る字形は動かない。
+ *
+ * EB Garamond / SIL Open Font License 1.1 / public/fonts/OFL.txt
+ * 部分集合は Google Fonts の配布(v33)から greek-ext / greek / latin の三つだけを取った。
+ * latin には U+02BC(Perseus が省略記号に使う修飾文字アポストロフィ)が入る。
+ */
+@font-face {
+  font-family: "EB Garamond Local";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ebgaramond-greek-ext.woff2") format("woff2");
+  unicode-range: U+1F00-1FFF;
+}
+
+@font-face {
+  font-family: "EB Garamond Local";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ebgaramond-greek.woff2") format("woff2");
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+
+@font-face {
+  font-family: "EB Garamond Local";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/ebgaramond-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC,
+    U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+    U+FEFF, U+FFFD;
+}
+
+/*
  * 配色は dataviz の検証済みパレットをそのまま使う。
  * `node scripts/validate_palette.js "#2a78d6,#eb6834,#1baf7a" --mode light --pairs all`
  * および dark(#3987e5,#d95926,#199e70)で全項目 PASS(2026-09-02 実測)。
@@ -1110,7 +1157,7 @@ h2 {
 .sec__grc {
   /* 同梱の EB Garamond。多アクセントの合成済み符号を持つ書体でないと、
      アクセントが次の字の後ろに独立した点として出る(実測) */
-  font-family: var(--font-greek), Cambria, "Times New Roman", serif;
+  font-family: "EB Garamond Local", Cambria, "Times New Roman", serif;
   font-size: 1.02rem;
   color: var(--text-primary);
 }
