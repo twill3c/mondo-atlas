@@ -125,6 +125,13 @@ async function probe(page) {
         );
         return xs.length ? Math.round(Math.max(...xs) - Math.min(...xs)) : 0;
       })(),
+      // 画面⑤
+      jaItems: document.querySelectorAll(".ja-item").length,
+      meters: document.querySelectorAll(".meter__fill").length,
+      // 充填率の表示が分子と分母を持っているか(割合だけを出さない)
+      hasFraction: [...document.querySelectorAll(".kpi__value")].some((e) =>
+        /\d[\d,]*\s*\/\s*\d/.test(e.textContent ?? ""),
+      ),
       // 帯の幅が 0 のものが無いか(データはすべて正)
       zeroBars: [...document.querySelectorAll(".bar")].filter(
         (b) => b.getBoundingClientRect().width < 1,
@@ -188,6 +195,13 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
     if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
+  } else if (page === "/japanese/") {
+    // 画面⑤: 36 篇の項目と、充填率の帯
+    if (r.jaItems !== expected.works) {
+      problems.push(`篇の項目が ${r.jaItems}(期待 ${expected.works})`);
+    }
+    if (r.meters !== 1) problems.push(`充填率の帯が ${r.meters} 本(期待 1)`);
+    if (!r.hasFraction) problems.push("充填率が分子と分母で出ていない(割合だけになっている)");
   } else if (page === "/style/") {
     // 画面④: 36 篇の点と、宣言した予測
     if (r.dots !== expected.works) problems.push(`点が ${r.dots} 個(期待 ${expected.works})`);
@@ -263,6 +277,9 @@ function selfTest() {
     lateDots: 6,
     predictions: 4,
     dotSpreadX: 600,
+    jaItems: 36,
+    meters: 1,
+    hasFraction: true,
   };
   const expected = { works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4 };
   const failures = [];
@@ -277,6 +294,9 @@ function selfTest() {
   }
   if (checkAtWidth(1280, ok, expected, "/style/").length !== 0) {
     failures.push("画面④の正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, ok, expected, "/japanese/").length !== 0) {
+    failures.push("画面⑤の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -331,9 +351,20 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
+  const jaCases = [
+    ["篇の項目の欠落", { ...ok, jaItems: 35 }],
+    ["充填率の帯の欠落", { ...ok, meters: 0 }],
+    ["充填率が割合だけ", { ...ok, hasFraction: false }],
+  ];
+  for (const [name, bad] of jaCases) {
+    if (checkAtWidth(1280, bad, expected, "/japanese/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
   return {
     failures,
-    cases: cases.length + breathCases.length + wordCases.length + styleCases.length,
+    cases:
+      cases.length + breathCases.length + wordCases.length + styleCases.length + jaCases.length,
   };
 }
 
@@ -360,7 +391,7 @@ async function main() {
     process.exit(2);
   }
 
-  const PAGES = ["/", "/breath/", "/words/", "/style/"];
+  const PAGES = ["/", "/breath/", "/words/", "/style/", "/japanese/"];
 
   // 期待値は**実データから導く**。定数で書くと、データが増えたときに検査だけが古くなる
   const index = JSON.parse(readFileSync(join(ROOT, "data", "index.json"), "utf8"));
@@ -423,7 +454,9 @@ async function main() {
               ? `一覧 ${r.sparks} / 面 ${r.breathPaths} / 断り ${r.trustBanners}`
               : pagePath === "/words/"
                 ? `行 ${r.heatRows} / 升目 ${r.heatCells} / 語 ${r.termChips} / 段 ${r.heatLevels}`
-                : `点 ${r.dots} / 後期 ${r.lateDots} / 予測 ${r.predictions} / 横の散り ${r.dotSpreadX}px`;
+                : pagePath === "/style/"
+                  ? `点 ${r.dots} / 後期 ${r.lateDots} / 予測 ${r.predictions} / 横の散り ${r.dotSpreadX}px`
+                  : `篇 ${r.jaItems} / 充填の帯 ${r.meters}`;
         console.log(
           `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,

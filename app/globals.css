@@ -349,9 +349,19 @@ h2 {
   white-space: nowrap;
 }
 
+/*
+ * **nowrap を既定にしない。** 小さい文字の汎用クラスなので長い注記にも使われ、
+ * そのたびに狭い幅で横に溢れた(L4 と L6 で二度)。折り返しを既定にし、
+ * 折り返してほしくない場所だけに明示する。
+ */
 .row__class {
   font-size: 0.7rem;
   color: var(--text-muted);
+}
+
+.row__meta .row__class,
+.legend .row__class,
+.ja-item__meta .row__class {
   white-space: nowrap;
 }
 
@@ -931,4 +941,107 @@ h2 {
   opacity: 0.45;
   margin: 0 -0.3rem;
   user-select: none;
+}
+
+/* ----------------------------------------------------- 画面⑤(和訳) */
+
+.meter {
+  height: 0.5rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--text-muted) 18%, transparent);
+  overflow: hidden;
+  margin: 1rem 0 0.4rem;
+}
+
+.meter__fill {
+  display: block;
+  height: 100%;
+  background: var(--series-1);
+  /* 充填率は小さくても見えるようにする。ただし幅は実際の割合のまま */
+  min-width: 2px;
+}
+
+.tetra { margin-top: 1.75rem; }
+
+.tetra__head {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  letter-spacing: 0.06em;
+  margin: 0 0 0.4rem;
+  font-weight: 500;
+}
+
+.ja-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 0.35rem; }
+
+.ja-item {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.ja-item__head {
+  font: inherit;
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.6rem 0.85rem;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+  min-height: 2.5rem;
+}
+
+.ja-item__head:hover { background: color-mix(in srgb, var(--text-muted) 8%, transparent); }
+
+.ja-item__title { font-size: 0.95rem; font-weight: 600; }
+
+.ja-item__meta { display: flex; align-items: baseline; gap: 0.6rem; }
+
+/* 充填の状態は**言葉**で出す。色だけに判定を持たせない */
+.fill { font-size: 0.72rem; padding: 0.05rem 0.4rem; border-radius: 4px; white-space: nowrap; }
+.fill--full { background: var(--series-1); color: var(--surface-1); }
+.fill--partial { background: var(--series-2); color: var(--surface-1); }
+.fill--none { border: 1px solid var(--border); color: var(--text-muted); }
+
+.ja-item__body {
+  padding: 0 0.85rem 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.kaidai {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0.75rem 0 0;
+  max-width: 44rem;
+}
+
+.pagelist {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.3rem;
+}
+
+.pagelist li {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  padding: 0.3rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.pagelist__no {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  text-align: right;
 }
