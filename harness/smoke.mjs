@@ -473,6 +473,48 @@ async function main() {
   const server = liveBase ? null : await serve(OUT);
   const base = liveBase ?? `http://127.0.0.1:${server.address().port}/`;
   console.log(`対象: ${base}`);
+
+  // **何を検品しているのかを先に確かめる**(HC-141)。
+  // 本番が健やかかを見る前に、配られているものが手元と同じかを見る ——
+  // デプロイが失敗しても本番は健やかなままなので、
+  // 健やかさの検査は「反映されたか」を一切語らない。
+  if (liveBase) {
+    const { computeStamp } = await import("../scripts/build_stamp.mjs");
+    const want = computeStamp(ROOT);
+    let got = null;
+    let why = "";
+    try {
+      const res = await fetch(new URL("/build-stamp.json", base));
+      if (!res.ok) why = `取得に失敗した(${res.status})`;
+      else got = await res.json();
+    } catch (e) {
+      why = String(e);
+    }
+    if (!got) {
+      console.error(`本番の刻印を読めない: ${why}`);
+      console.error("  → 刻印より前のビルドが配られている可能性がある");
+      server?.close();
+      process.exitCode = 1;
+      return;
+    }
+    if (got.stamp !== want.stamp) {
+      console.error(`**本番は手元と違うものを配っている**`);
+      console.error(`  手元 ${want.stamp} / 本番 ${got.stamp}`);
+      const byPath = new Map((got.files ?? []).map((f) => [f.path, f]));
+      for (const f of want.files) {
+        const g = byPath.get(f.path);
+        if (!g) console.error(`  - ${f.path}: 本番に無い`);
+        else if (g.sha !== f.sha) {
+          console.error(`  - ${f.path}: 手元 ${f.bytes}B / 本番 ${g.bytes}B`);
+        }
+      }
+      console.error("  → デプロイが済んでいない。検品の合否はこの本番については語れない");
+      server?.close();
+      process.exitCode = 1;
+      return;
+    }
+    console.log(`刻印 ${want.stamp} — 本番は手元と同じものを配っている`);
+  }
   const browser = await chromium.launch();
   let bad = 0;
 

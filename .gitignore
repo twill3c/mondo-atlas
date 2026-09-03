@@ -26,3 +26,6 @@ data/turns.json
 # data/style.json は画面④の材料(8KB)。ビルド時 import するのでコミットする
 # data/japanese.json は画面⑤の材料(40KB)。ビルド時 import するのでコミットする
 # data/reader.json は画面⑥ の材料(391KB・希語+英訳+和訳の本文)。ビルド時 import するのでコミットする
+
+# ビルドの刻印(prebuild が毎回作り直す)
+public/build-stamp.json

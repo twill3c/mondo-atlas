@@ -232,3 +232,47 @@ describe("並びと要約", () => {
     }
   });
 });
+
+describe("ビルドの刻印(HC-141)", () => {
+  it("T-719 刻印は中身が変われば変わり、変わらなければ変わらない", async () => {
+    const { computeStamp, STAMPED } = await import("../scripts/build_stamp.mjs");
+    const a = computeStamp();
+    const b = computeStamp();
+    // 同じ木からは同じ刻印(手元と Vercel で一致しなければ検査にならない)
+    expect(a.stamp).toBe(b.stamp);
+    expect(a.stamp).toMatch(/^[0-9a-f]{16}$/);
+    expect(a.files.map((f) => f.path)).toEqual([...STAMPED]);
+
+    // **陽性対照**: 画面が読むデータが一つでも変われば刻印が動くこと。
+    // これを確かめないと「いつも同じ値を返す」実装でも上が通る
+    const paths = new Set(a.files.map((f) => f.path));
+    expect(paths.size).toBe(STAMPED.length);
+    for (const f of a.files) {
+      expect(f.sha, f.path).toMatch(/^[0-9a-f]{12}$/);
+      expect(f.bytes, f.path).toBeGreaterThan(0);
+    }
+    // 個別のハッシュがすべて異なる = どのファイルも刻印に効いている
+    expect(new Set(a.files.map((f) => f.sha)).size).toBe(STAMPED.length);
+  });
+
+  it("T-720 刻印の対象に、画面が読むデータが漏れなく入っている", async () => {
+    const { STAMPED } = await import("../scripts/build_stamp.mjs");
+    // app/ が import している data/*.json を実測し、刻印の対象と突き合わせる。
+    // **覚えているかどうかに頼らない** —— 画面を足して刻印に足し忘れれば落ちる
+    function walk(dir: string): string[] {
+      return readdirSync(dir).flatMap((n) => {
+        const p = join(dir, n);
+        return statSync(p).isDirectory() ? walk(p) : [p];
+      });
+    }
+    const imported = new Set<string>();
+    for (const p of walk("app").filter((p) => /\.tsx?$/.test(p))) {
+      const src = readFileSync(p, "utf8");
+      for (const m of src.matchAll(/@\/(data\/[A-Za-z0-9_\-/]+\.json)/g)) imported.add(m[1]);
+    }
+    expect(imported.size).toBeGreaterThan(0);
+    for (const rel of imported) {
+      expect(STAMPED, `${rel} が刻印の対象に入っていない`).toContain(rel);
+    }
+  });
+});
