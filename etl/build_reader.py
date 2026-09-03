@@ -105,7 +105,8 @@ def main() -> int:
         print("  {:9}{:12} 訳 {:>3} / {:>3} 節  {}".format(
             w["abbr"], w["title"][:10], w["nTranslated"], w["nSections"],
             "完訳" if w["complete"] else "未訳 {} 節".format(len(w["untranslated"]))))
-    print("\n三篇で {} / {} 節 = {:.1%}".format(done, total, doc["coverageOfReader"]))
+    print("\n載せた {} 篇で {} / {} 節 = {:.1%}".format(
+        len(works), done, total, doc["coverageOfReader"]))
     print("全集では {} / {:,} 節 = {:.2%}".format(done, corpus_sections, doc["coverageOfCorpus"]))
     if problems:
         print("\n**検算に失敗**")

@@ -60,30 +60,40 @@ describe("配られるデータ", () => {
     }
   });
 
-  it("T-725 未訳の篇が実データに戻った(合成でなく本物で撃つ)", () => {
-    // L9 で三篇とも完訳になり、実データから「未訳」が消えて
-    // 対照が主語を失った。四篇目(メノン)を載せて実データの側でも撃てるようにする。
-    // T-717 の合成対照は**消さない** —— 実データがまた完訳だけになる日が来る
-    const w = works.find((x) => x.abbr === "Men")!;
-    expect(w.complete).toBe(false);
-    expect(w.nTranslated).toBe(0);
-    expect(w.untranslated.length).toBe(w.nSections);
-    // 未訳の節も本文を持つ(訳が無いだけで節が無いのではない)
-    for (const s of w.sections) {
-      expect(s.grc.length, s.id).toBeGreaterThan(0);
-      expect(isUntranslated(s), s.id).toBe(true);
+  it("T-725 未訳の篇があるなら、実データの側でも撃つ", () => {
+    // **この検査は主語を失っては消え、また戻ってくる。**
+    //   L9: 三篇とも完訳になり実データから未訳が消えた → 合成へ移した(T-717)
+    //   L11: メノンを未訳のまま載せた → 実データで撃てるようになった
+    //   L15: メノンを完訳した → また実データから消えた
+    // そのたびに検査を書き換えるのは無駄なので、**あるときだけ撃つ**形にする。
+    // 五篇目に未訳の篇が入れば、書き換えなしに勝手に効きはじめる。
+    // T-717 の合成対照は**どの状態でも消さない**。
+    const incomplete = works.filter((w) => !w.complete);
+    for (const w of incomplete) {
+      expect(w.untranslated.length, w.abbr).toBeGreaterThan(0);
+      for (const s of w.sections) {
+        // 未訳の節も本文を持つ(訳が無いだけで節が無いのではない)
+        expect(s.grc.length, s.id).toBeGreaterThan(0);
+      }
+      expect(w.sections.filter(isUntranslated).length, w.abbr).toBe(w.untranslated.length);
+    }
+    // いま未訳の篇が無いこと自体は異常ではない。だが**それを黙って通さない** ——
+    // 合成の対照が生きていることを、ここで名指しで要求する
+    if (incomplete.length === 0) {
+      const src = readFileSync(join("tests-js", "reader.test.ts"), "utf8");
+      expect(src, "実データに未訳が無いなら T-717 が唯一の対照になる").toContain("T-717");
     }
   });
 
-  it("T-703 裁判三部は全篇完訳(実測 2026-09-03)", () => {
-    const done: Record<string, number> = { Euthphr: 70, Ap: 125, Crit: 59 };
+  it("T-703 リーダーの篇はすべて完訳(実測 2026-09-04)", () => {
+    const done: Record<string, number> = { Euthphr: 70, Ap: 125, Crit: 59, Men: 151 };
     for (const [abbr, n] of Object.entries(done)) {
       const w = works.find((x) => x.abbr === abbr)!;
       expect(w.complete, abbr).toBe(true);
       expect(w.untranslated, abbr).toEqual([]);
       expect(w.nTranslated, abbr).toBe(n);
     }
-    expect(reader.translated).toBe(254);
+    expect(reader.translated).toBe(405);
   });
 
   it("T-717 未訳の判定は**素通しになっていない**(合成の対照)", () => {
