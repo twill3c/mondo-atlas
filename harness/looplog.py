@@ -476,13 +476,15 @@ def cmd_append(args) -> int:
                 "(存在しない・correction・訂正済みのいずれか)(LL-08)"
             )
             return 1
-        # **loop_start は訂正で無効化できない。**
+        # **loop_start は訂正で無効化できない**(HC-150)。
         #
         # 無効化すると有効レコード列の先頭が correction になり、LL-01
         # (先頭は loop_start)に永久に違反する —— correction は correction を
         # 指せないので、あとから追記だけで直す道が無い。
         # append は通るのに validate だけが落ちる、最悪の形で気づくことになる。
-        # 2026-09-04 実測(loop_022)。目標の数字を訂正しようとして踏んだ。
+        #
+        # 追記専用の記録では、**壊せる操作を受理してから壊れを報告する設計は
+        # 取り返しがつかない**。だから生成側で拒む。
         target_rec = next(r for ln, r in effective if ln == target)
         if target_rec.get("event") == "loop_start":
             print(
