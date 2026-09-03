@@ -336,3 +336,42 @@ describe("篇ごとの分割(N-03)", () => {
     expect(readerHref("<script>", known)).toBe(null);
   });
 });
+
+describe("刻印は改行コードで空振りしない(HC-148 の追補)", () => {
+  it("T-724 CRLF と LF で同じ刻印になる", async () => {
+    const { computeStamp } = await import("../scripts/build_stamp.mjs");
+    const { mkdtempSync, mkdirSync, writeFileSync } = await import("node:fs");
+    const { tmpdir } = await import("node:os");
+
+    // この機は core.autocrlf=true で、作業ツリーが CRLF・配信側が LF になる。
+    // **生のバイト列で測ると同じ内容でも必ず食い違い、検査が毎回「違う」と言い続ける**
+    const names = [
+      "index.json", "breath.json", "words.json", "style.json", "japanese.json",
+    ];
+    function build(eol: string) {
+      const root = mkdtempSync(join(tmpdir(), "stamp-"));
+      mkdirSync(join(root, "data", "reader"), { recursive: true });
+      for (const n of names) {
+        writeFileSync(join(root, "data", n), `{${eol}  "a": 1${eol}}${eol}`);
+      }
+      writeFileSync(join(root, "data", "reader", "index.json"), `{${eol}"w": []${eol}}`);
+      writeFileSync(join(root, "data", "reader", "X.json"), `{${eol}"s": []${eol}}`);
+      return computeStamp(root);
+    }
+    const lf = build("\n");
+    const crlf = build("\r\n");
+    expect(crlf.stamp).toBe(lf.stamp);
+
+    // **陽性対照**: 中身が本当に変われば刻印は動く。
+    // これを見ないと「いつも同じ値」でも上が通る
+    const other = build("\n");
+    expect(other.stamp).toBe(lf.stamp);
+    const { writeFileSync: w2 } = await import("node:fs");
+    const root2 = mkdtempSync(join(tmpdir(), "stamp-"));
+    mkdirSync(join(root2, "data", "reader"), { recursive: true });
+    for (const n of names) w2(join(root2, "data", n), '{\n  "a": 2\n}\n');
+    w2(join(root2, "data", "reader", "index.json"), '{\n"w": []\n}');
+    w2(join(root2, "data", "reader", "X.json"), '{\n"s": []\n}');
+    expect(computeStamp(root2).stamp).not.toBe(lf.stamp);
+  });
+});

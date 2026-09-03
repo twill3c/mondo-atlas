@@ -52,11 +52,24 @@ export function stampedFiles(root = ROOT) {
 /** 既定の木での対象一覧(検査が読みやすいように名前を残す)。 */
 export const STAMPED = stampedFiles();
 
+/**
+ * 改行を揃えてから測る。
+ *
+ * この機は `core.autocrlf=true` なので、**作業ツリーは CRLF・git と配信側は LF** になる。
+ * 生のバイト列で測ると、同じ内容でも手元と本番で必ず食い違い、
+ * 検査が毎回「違う」と言い続ける —— **狼少年になった検査は、何も検査しないのと
+ * 同じか、それより悪い**(無視する癖がつくぶん)。
+ * JSON にとって CRLF と LF は中身の違いではないので、揃えてから測る。
+ */
+function normalizeEol(buf) {
+  return Buffer.from(buf.toString("utf8").split("\r\n").join("\n"), "utf8");
+}
+
 export function computeStamp(root = ROOT) {
   const h = createHash("sha256");
   const files = [];
   for (const rel of stampedFiles(root)) {
-    const buf = readFileSync(join(root, rel));
+    const buf = normalizeEol(readFileSync(join(root, rel)));
     const one = createHash("sha256").update(buf).digest("hex").slice(0, 12);
     files.push({ path: rel, bytes: buf.length, sha: one });
     h.update(rel).update("\0").update(buf).update("\0");
