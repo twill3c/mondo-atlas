@@ -45,19 +45,40 @@ describe("配られるデータ", () => {
     }
   });
 
-  it("T-703 完訳した篇は完訳になっている(実測 2026-09-03)", () => {
-    const done: Record<string, number> = { Crit: 59, Euthphr: 70 };
+  it("T-703 裁判三部は全篇完訳(実測 2026-09-03)", () => {
+    const done: Record<string, number> = { Euthphr: 70, Ap: 125, Crit: 59 };
     for (const [abbr, n] of Object.entries(done)) {
       const w = works.find((x) => x.abbr === abbr)!;
       expect(w.complete, abbr).toBe(true);
       expect(w.untranslated, abbr).toEqual([]);
       expect(w.nTranslated, abbr).toBe(n);
     }
-    // **対照**: まだ訳していない篇が完訳と出ないこと。
-    // これが無いと「全部 complete にする」実装でも上が通る
-    const ap = works.find((w) => w.abbr === "Ap")!;
-    expect(ap.complete).toBe(false);
-    expect(ap.nTranslated).toBe(0);
+    expect(reader.translated).toBe(254);
+    expect(reader.readerSections).toBe(254);
+  });
+
+  it("T-717 未訳の判定は**素通しになっていない**(合成の対照)", () => {
+    // 三篇とも完訳になった時点で、実データからは「未訳」が消えた。
+    // 対照が無いと「全部 complete と答える」実装でも T-703 が通ってしまうので、
+    // **合成した篇**で未訳の側を撃つ。実データが未訳を持たなくなっても、
+    // 判定そのものは検査され続ける
+    const half: ReaderWork = {
+      abbr: "X",
+      title: "合成",
+      nSections: 2,
+      nTranslated: 1,
+      untranslated: ["X.1b"],
+      complete: false,
+      sections: [
+        { id: "X.1a", page: 1, letter: "a", grc: "α", eng: "a", ja: "あ" },
+        { id: "X.1b", page: 1, letter: "b", grc: "β", eng: "b", ja: "" },
+      ],
+    };
+    expect(half.sections.filter(isUntranslated).map((s) => s.id)).toEqual(["X.1b"]);
+    expect(isUntranslated(half.sections[0])).toBe(false);
+    expect(progress(half)).toEqual({ done: 1, total: 2, ratio: 0.5 });
+    // 未訳の節も本文を持つ(訳が無いだけで節が無いのではない)
+    expect(half.sections[1].grc.length).toBeGreaterThan(0);
   });
 
   it("T-704 訳の節 ID はすべて原文に実在する", () => {
@@ -74,13 +95,26 @@ describe("配られるデータ", () => {
     expect(reader.coverageOfCorpus).toBeLessThan(reader.coverageOfReader);
   });
 
-  it("T-706 未訳の節も本文を持つ(訳が無いだけで節が無いのではない)", () => {
-    const ap = works.find((w) => w.abbr === "Ap")!;
-    expect(ap.untranslated.length).toBeGreaterThan(0);
-    for (const s of ap.sections) {
-      expect(s.grc.length).toBeGreaterThan(0);
-      expect(isUntranslated(s)).toBe(true);
+  it("T-706 全節が希語本文を持ち、訳も空でない", () => {
+    for (const w of works) {
+      for (const s of w.sections) {
+        expect(s.grc.length, s.id).toBeGreaterThan(0);
+        expect(s.ja.length, s.id).toBeGreaterThan(0);
+      }
     }
+  });
+
+  it("T-718 リーダーの重さは**測ってある**(この作りは篇を足すと破れる)", () => {
+    // 本文をページに直に埋め込むので、篇を足すほど転送量が増える。
+    // 実測 2026-09-03: 三篇で out/read/index.html が 544KB(gzip 177KB・本番 153KB)。
+    // 四篇目(メノン 151 節)を足すと約 920KB になるので、そのときは
+    // **篇ごとにページを分ける**(N-03)。この検査はその判断の根拠を固定する
+    const chars = works.reduce(
+      (a, w) => a + w.sections.reduce((b, s) => b + s.grc.length + s.eng.length + s.ja.length, 0),
+      0,
+    );
+    expect(chars).toBeGreaterThan(200_000);
+    expect(chars, "篇を足したなら分割を検討すること").toBeLessThan(400_000);
   });
 });
 
