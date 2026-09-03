@@ -226,8 +226,11 @@ function checkAtWidth(width, r, expected, page = "/") {
     }
     if (r.secCols !== r.secs) problems.push(`三段の欄が ${r.secCols}(節は ${r.secs})`);
     if (r.emptyGrc > 0) problems.push(`希語が空の節が ${r.emptyGrc} 件`);
-    // いま載せている篇はすべて完訳なので、未訳の空欄は 0 でなければならない
-    if (r.emptyJa !== 0) problems.push(`完訳の篇なのに未訳の空欄が ${r.emptyJa} 件`);
+    // 未訳の空欄は**その頁の未訳節数と一致する**。完訳の篇なら 0、
+    // 未訳の篇なら全節。0 に決め打ちすると、未訳の表示経路が検査から消える
+    if (r.emptyJa !== want.emptyJa) {
+      problems.push(`未訳の空欄が ${r.emptyJa} 件(期待 ${want.emptyJa})`);
+    }
   } else if (page === "/japanese/") {
     // 画面⑤: 36 篇の項目と、充填率の帯
     if (r.jaItems !== expected.works) {
@@ -317,14 +320,18 @@ function selfTest() {
     secCols: 5,
     pageNos: 1,
     pagerNums: 12,
-    workLinks: 3,
+    workLinks: 4,
     emptyJa: 0,
     emptyGrc: 0,
   };
   const expected = {
     works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4,
-    readerWorks: 3,
-    perWork: { "/read/crit/": { pagerNums: 12, secs: 5 } },
+    readerWorks: 4,
+    perWork: {
+      "/read/crit/": { pagerNums: 12, secs: 5, emptyJa: 0 },
+      // 未訳の篇。空欄が出るのが正しい
+      "/read/men/": { pagerNums: 31, secs: 3, emptyJa: 3 },
+    },
   };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
@@ -424,10 +431,24 @@ function selfTest() {
       failures.push(`「${name}」を捕まえられない`);
     }
   }
+  // 未訳の篇の対照。**空欄が出ないことも異常**である
+  const menOk = { ...ok, secs: 3, secCols: 3, pagerNums: 31, emptyJa: 3 };
+  if (checkAtWidth(1280, menOk, expected, "/read/men/").length !== 0) {
+    failures.push("未訳の篇の正常な入力を落とした(偽陽性)");
+  }
+  const menCases = [
+    ["未訳なのに空欄が出ていない", { ...menOk, emptyJa: 0 }],
+    ["未訳の空欄が多すぎる", { ...menOk, emptyJa: 4 }],
+  ];
+  for (const [name, bad] of menCases) {
+    if (checkAtWidth(1280, bad, expected, "/read/men/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
   // 目次の対照。**分割が壊れて目次に本文が出る**のがいちばん見たい故障
   const indexCases = [
     ["目次に本文が出ている", { ...ok, secs: 5 }],
-    ["篇の一覧の欠落", { ...ok, secs: 0, workLinks: 2 }],
+    ["篇の一覧の欠落", { ...ok, secs: 0, workLinks: 3 }],
     ["充填率が割合だけ", { ...ok, secs: 0, hasFraction: false }],
   ];
   for (const [name, bad] of indexCases) {
@@ -444,7 +465,8 @@ function selfTest() {
       styleCases.length +
       jaCases.length +
       readCases.length +
-      indexCases.length,
+      indexCases.length +
+      menCases.length,
   };
 }
 
@@ -496,9 +518,13 @@ async function main() {
       readFileSync(join(ROOT, "data", "reader", `${w.abbr}.json`), "utf8"),
     );
     const first = doc.sections[0].page;
+    const onFirst = doc.sections.filter((s) => s.page === first);
     perWork[`/read/${w.slug}/`] = {
       pagerNums: new Set(doc.sections.map((s) => s.page)).size,
-      secs: doc.sections.filter((s) => s.page === first).length,
+      secs: onFirst.length,
+      // 初手の頁に未訳が何節あるか。**完訳かどうかで期待値が変わる** ——
+      // 「未訳は空欄で出す」経路は、未訳の篇が載っていて初めて実データで撃てる
+      emptyJa: onFirst.filter((s) => !s.ja).length,
     };
   }
 

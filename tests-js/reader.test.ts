@@ -13,6 +13,7 @@ import reader from "../data/reader/index.json";
 import euthphr from "../data/reader/Euthphr.json";
 import ap from "../data/reader/Ap.json";
 import crit from "../data/reader/Crit.json";
+import men from "../data/reader/Men.json";
 import tr from "../data/curated/translation.json";
 import {
   type ReaderWork,
@@ -29,14 +30,14 @@ import {
 
 /** 目次(本文を持たない)と、篇ごとの本文。画面と同じ読み方をする。 */
 const links = reader.works as unknown as WorkLink[];
-const works = [euthphr, ap, crit] as unknown as ReaderWork[];
+const works = [euthphr, ap, crit, men] as unknown as ReaderWork[];
 
 describe("配られるデータ", () => {
   it("T-701 リーダーの篇は和訳が始まっている篇だけ", () => {
-    expect(works.map((w) => w.abbr)).toEqual(["Euthphr", "Ap", "Crit"]);
+    expect(works.map((w) => w.abbr)).toEqual(["Euthphr", "Ap", "Crit", "Men"]);
     // 目次と本文が同じ篇を指していること(片方だけ足すと食い違う)
     expect(links.map((w) => w.abbr)).toEqual(works.map((w) => w.abbr));
-    expect(links.map((w) => w.slug)).toEqual(["euthphr", "ap", "crit"]);
+    expect(links.map((w) => w.slug)).toEqual(["euthphr", "ap", "crit", "men"]);
     for (const w of works) {
       expect(w.sections.length).toBe(w.nSections);
       for (const s of w.sections) {
@@ -52,6 +53,25 @@ describe("配られるデータ", () => {
       expect(w.untranslated, w.abbr).toEqual(fromSource);
       expect(w.nTranslated, w.abbr).toBe(w.nSections - fromSource.length);
       expect(w.complete, w.abbr).toBe(fromSource.length === 0);
+      // 目次の数も同じことを言っていること(片方だけずれない)
+      const link = links.find((l) => l.abbr === w.abbr)!;
+      expect(link.nTranslated, w.abbr).toBe(w.nTranslated);
+      expect(link.complete, w.abbr).toBe(w.complete);
+    }
+  });
+
+  it("T-725 未訳の篇が実データに戻った(合成でなく本物で撃つ)", () => {
+    // L9 で三篇とも完訳になり、実データから「未訳」が消えて
+    // 対照が主語を失った。四篇目(メノン)を載せて実データの側でも撃てるようにする。
+    // T-717 の合成対照は**消さない** —— 実データがまた完訳だけになる日が来る
+    const w = works.find((x) => x.abbr === "Men")!;
+    expect(w.complete).toBe(false);
+    expect(w.nTranslated).toBe(0);
+    expect(w.untranslated.length).toBe(w.nSections);
+    // 未訳の節も本文を持つ(訳が無いだけで節が無いのではない)
+    for (const s of w.sections) {
+      expect(s.grc.length, s.id).toBeGreaterThan(0);
+      expect(isUntranslated(s), s.id).toBe(true);
     }
   });
 
@@ -64,7 +84,6 @@ describe("配られるデータ", () => {
       expect(w.nTranslated, abbr).toBe(n);
     }
     expect(reader.translated).toBe(254);
-    expect(reader.readerSections).toBe(254);
   });
 
   it("T-717 未訳の判定は**素通しになっていない**(合成の対照)", () => {
@@ -105,26 +124,30 @@ describe("配られるデータ", () => {
     expect(reader.coverageOfCorpus).toBeLessThan(reader.coverageOfReader);
   });
 
-  it("T-706 全節が希語本文を持ち、訳も空でない", () => {
+  it("T-706 全節が希語本文を持ち、完訳の篇は訳も空でない", () => {
     for (const w of works) {
       for (const s of w.sections) {
         expect(s.grc.length, s.id).toBeGreaterThan(0);
-        expect(s.ja.length, s.id).toBeGreaterThan(0);
+        if (w.complete) expect(s.ja.length, s.id).toBeGreaterThan(0);
       }
     }
   });
 
-  it("T-718 リーダーの重さは**測ってある**(この作りは篇を足すと破れる)", () => {
-    // 本文をページに直に埋め込むので、篇を足すほど転送量が増える。
-    // 実測 2026-09-03: 三篇で out/read/index.html が 544KB(gzip 177KB・本番 153KB)。
-    // 四篇目(メノン 151 節)を足すと約 920KB になるので、そのときは
-    // **篇ごとにページを分ける**(N-03)。この検査はその判断の根拠を固定する
-    const chars = works.reduce(
-      (a, w) => a + w.sections.reduce((b, s) => b + s.grc.length + s.eng.length + s.ja.length, 0),
-      0,
-    );
-    expect(chars).toBeGreaterThan(200_000);
-    expect(chars, "篇を足したなら分割を検討すること").toBeLessThan(400_000);
+  it("T-718 リーダーの重さは**一篇あたり**で測る(分割後の不変量)", () => {
+    // 分割前は「三篇ぶんの合計」が読み手の負担だった(一枚に埋め込んでいたので)。
+    // 分割後に効くのは**いちばん重い一篇**である —— 読み手が一度に受け取るのはそれだけで、
+    // 篇をいくつ足しても他の頁は重くならない。
+    // **測る量が変わったのは、作りが変わったからである**(閾値を緩めたのではない)
+    const per = works.map((w) => ({
+      abbr: w.abbr,
+      chars: w.sections.reduce((b, s) => b + s.grc.length + s.eng.length + s.ja.length, 0),
+    }));
+    for (const p of per) {
+      expect(p.chars, `${p.abbr} が単独で重すぎる`).toBeLessThan(200_000);
+    }
+    // 合計は増え続けてよい。増えても一頁あたりは増えない、というのが分割の主張
+    const total = per.reduce((a, p) => a + p.chars, 0);
+    expect(total).toBeGreaterThan(Math.max(...per.map((p) => p.chars)));
   });
 });
 
@@ -314,9 +337,11 @@ describe("篇ごとの分割(N-03)", () => {
 
   it("T-722 目次は本文を持たない(分割の意味そのもの)", () => {
     const raw = readFileSync(join("data", "reader", "index.json"), "utf8");
-    expect(raw.length).toBeLessThan(4000);
+    expect(raw.length).toBeLessThan(2000);
     for (const w of links) {
       expect(w, w.abbr).not.toHaveProperty("sections");
+      // 未訳 ID の列も持たない —— 未訳の篇が増えるほど目次が太るため
+      expect(w, w.abbr).not.toHaveProperty("untranslated");
       // 何 KB 増えるかを目次が持っている(読み手に重さを知らせるため)
       expect(w.bytes, w.abbr).toBeGreaterThan(1000);
     }

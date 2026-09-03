@@ -22,12 +22,14 @@ OUT_DIR = os.path.join(ROOT, "data", "reader")
 
 #: リーダーに載せる篇。全 36 篇の本文を配ると 12.5 MB になるので、
 #: **和訳が始まっている篇だけ**を出す。増えたらここに足す。
-INCLUDE = ["Euthphr", "Ap", "Crit"]
+INCLUDE = ["Euthphr", "Ap", "Crit", "Men"]
 
 
 def _index_entry(work: dict, n_bytes: int) -> dict:
     """目次の 1 件。**本文(sections)は持たない** —— それが分割の意味である。"""
-    entry = {k: v for k, v in work.items() if k != "sections"}
+    # `untranslated`(節 ID の列)も落とす —— 未訳の篇が増えるほど目次が太る。
+    # 数は nSections と nTranslated で足り、ID の列は篇のファイルが持っている
+    entry = {k: v for k, v in work.items() if k not in ("sections", "untranslated")}
     entry["slug"] = work["abbr"].lower()
     entry["pages"] = sorted({s["page"] for s in work["sections"]})
     entry["bytes"] = n_bytes
