@@ -6,27 +6,37 @@
  * —— 訳の側から数えると、原文から落ちた節は永遠に見えない。
  */
 
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import reader from "../data/reader.json";
+import reader from "../data/reader/index.json";
+import euthphr from "../data/reader/Euthphr.json";
+import ap from "../data/reader/Ap.json";
+import crit from "../data/reader/Crit.json";
 import tr from "../data/curated/translation.json";
 import {
   type ReaderWork,
+  type WorkLink,
   byPage,
   isSectionId,
   isUntranslated,
   pageIndexOf,
   parseLoc,
+  readerHref,
   progress,
   workOf,
 } from "../lib/reader";
 
-const works = reader.works as unknown as ReaderWork[];
+/** 目次(本文を持たない)と、篇ごとの本文。画面と同じ読み方をする。 */
+const links = reader.works as unknown as WorkLink[];
+const works = [euthphr, ap, crit] as unknown as ReaderWork[];
 
 describe("配られるデータ", () => {
   it("T-701 リーダーの篇は和訳が始まっている篇だけ", () => {
     expect(works.map((w) => w.abbr)).toEqual(["Euthphr", "Ap", "Crit"]);
+    // 目次と本文が同じ篇を指していること(片方だけ足すと食い違う)
+    expect(links.map((w) => w.abbr)).toEqual(works.map((w) => w.abbr));
+    expect(links.map((w) => w.slug)).toEqual(["euthphr", "ap", "crit"]);
     for (const w of works) {
       expect(w.sections.length).toBe(w.nSections);
       for (const s of w.sections) {
@@ -274,5 +284,55 @@ describe("ビルドの刻印(HC-141)", () => {
     for (const rel of imported) {
       expect(STAMPED, `${rel} が刻印の対象に入っていない`).toContain(rel);
     }
+  });
+});
+
+describe("篇ごとの分割(N-03)", () => {
+  it("T-721 目次に載る篇には、実在する頁と本文ファイルが対応する", () => {
+    // **足し忘れを撃つ。** 篇を足すには
+    //   (1) build_reader.py の INCLUDE  (2) data/reader/<略号>.json
+    //   (3) app/read/<slug>/page.tsx
+    // の三つが要る。どれか一つを忘れれば、ここで落ちる
+    for (const w of links) {
+      const page = join("app", "read", w.slug, "page.tsx");
+      expect(existsSync(page), `${page} が無い`).toBe(true);
+      const src = readFileSync(page, "utf8");
+      expect(src, page).toContain(`@/data/reader/${w.abbr}.json`);
+
+      const data = join("data", "reader", `${w.abbr}.json`);
+      expect(existsSync(data), `${data} が無い`).toBe(true);
+    }
+    // 逆向き: 頁だけあって目次に無いものは残骸
+    const slugs = new Set(links.map((w) => w.slug));
+    const dirs = readdirSync(join("app", "read")).filter((n) =>
+      statSync(join("app", "read", n)).isDirectory(),
+    );
+    for (const d of dirs) {
+      expect(slugs.has(d), `app/read/${d}/ は目次に無い`).toBe(true);
+    }
+  });
+
+  it("T-722 目次は本文を持たない(分割の意味そのもの)", () => {
+    const raw = readFileSync(join("data", "reader", "index.json"), "utf8");
+    expect(raw.length).toBeLessThan(4000);
+    for (const w of links) {
+      expect(w, w.abbr).not.toHaveProperty("sections");
+      // 何 KB 増えるかを目次が持っている(読み手に重さを知らせるため)
+      expect(w.bytes, w.abbr).toBeGreaterThan(1000);
+    }
+    // 一篇あたりの重さは、束ねていたとき(513KB)より小さいこと
+    const biggest = Math.max(...links.map((w) => w.bytes));
+    expect(biggest).toBeLessThan(400_000);
+  });
+
+  it("T-723 既に配った ?loc= は篇の頁へ送られる", () => {
+    const known = links.map((w) => w.abbr);
+    expect(readerHref("Crit.43a", known)).toBe("/read/crit/?loc=Crit.43a");
+    expect(readerHref("Ap.17a", known)).toBe("/read/ap/?loc=Ap.17a");
+    expect(readerHref("Euthphr.2a", known)).toBe("/read/euthphr/?loc=Euthphr.2a");
+    // 載せていない篇と、形の違うものは送らない
+    expect(readerHref("Rep.327a", known)).toBe(null);
+    expect(readerHref("Crit.99z", known)).toBe(null);
+    expect(readerHref("<script>", known)).toBe(null);
   });
 });

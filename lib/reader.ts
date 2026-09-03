@@ -14,6 +14,18 @@ export type ReaderSection = {
   ja: string;
 };
 
+/** 目次に載る 1 件。**本文を持たない** —— 篇の頁だけが本文を読む(N-03)。 */
+export type WorkLink = {
+  abbr: string;
+  slug: string;
+  title: string;
+  nSections: number;
+  nTranslated: number;
+  complete: boolean;
+  pages: number[];
+  bytes: number;
+};
+
 export type ReaderWork = {
   abbr: string;
   title: string;
@@ -29,6 +41,17 @@ const SECTION_ID = /^[A-Za-z0-9]+\.(?:\d+\.)?\d+[a-e]$/;
 
 export function isSectionId(s: string): boolean {
   return SECTION_ID.test(s);
+}
+
+/**
+ * 節 ID から篇の頁の道筋を作る(`Crit.51c` → `/read/crit/?loc=Crit.51c`)。
+ * **既に配ってしまった `?loc=` を壊さない**ために、目次はこれで送り直す。
+ * 形の検査を通らないもの、載せていない篇は null。
+ */
+export function readerHref(sectionId: string, known: readonly string[]): string | null {
+  const abbr = workOf(sectionId);
+  if (!abbr || !known.includes(abbr)) return null;
+  return `/read/${abbr.toLowerCase()}/?loc=${encodeURIComponent(sectionId)}`;
 }
 
 /** 節 ID から略号を取り出す。形が違えば null。 */

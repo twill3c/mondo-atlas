@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import readerData from "@/data/reader.json";
+import index from "@/data/reader/index.json";
 import { fmt } from "@/lib/chart";
-import type { ReaderWork } from "@/lib/reader";
-import ReaderView from "./ReaderView";
+import type { WorkLink } from "@/lib/reader";
+import ReaderIndexView from "./ReaderIndexView";
 
 export const metadata: Metadata = {
   title: "読む — 問答アトラス",
@@ -10,9 +10,9 @@ export const metadata: Metadata = {
     "ギリシャ語・英訳・和訳をステファヌス節で揃えて読む。節番号がそのまま住所になる。",
 };
 
-const works = readerData.works as unknown as ReaderWork[];
+const works = index.works as unknown as WorkLink[];
 
-export default function ReadPage() {
+export default function ReadIndexPage() {
   return (
     <main>
       <h1>
@@ -30,33 +30,39 @@ export default function ReadPage() {
       <ul className="kpis">
         <li className="kpi">
           <span className="kpi__value">
-            {fmt(readerData.translated)} / {fmt(readerData.readerSections)}
+            {fmt(index.translated)} / {fmt(index.readerSections)}
           </span>
-          <span className="kpi__label">この三篇の和訳(節)</span>
+          <span className="kpi__label">載せた篇の和訳(節)</span>
         </li>
         <li className="kpi">
           <span className="kpi__value">
-            {fmt(readerData.translated)} / {fmt(readerData.corpusSections)}
+            {fmt(index.translated)} / {fmt(index.corpusSections)}
           </span>
           <span className="kpi__label">全集に対して(節)</span>
         </li>
         <li className="kpi">
           <span className="kpi__value">
-            {(readerData.coverageOfCorpus * 100).toFixed(2)}%
+            {(index.coverageOfCorpus * 100).toFixed(2)}%
           </span>
           <span className="kpi__label">全集に対する充填率</span>
         </li>
         <li className="kpi">
-          <span className="kpi__value">
-            {fmt(works.filter((w) => w.complete).length)}
-          </span>
+          <span className="kpi__value">{fmt(works.filter((w) => w.complete).length)}</span>
           <span className="kpi__label">完訳した篇</span>
         </li>
       </ul>
 
-      <ReaderView works={works} />
+      <h2>載せている篇</h2>
+      <ReaderIndexView works={works} />
 
       <div className="note">
+        <p>
+          <strong>篇ごとに別の頁にしてある。</strong>
+          はじめは三篇を一枚に埋め込んでいたが、それだと篇を足すたびに全体が重くなる ——
+          三篇で配信 153 キロバイト(圧縮前 544 キロバイト)まで育っていた。
+          いまはどの頁も自分の篇の本文しか読まない。上の一覧に出ている
+          キロバイト数が、その篇を開いたときに増える分である。
+        </p>
         <p>
           <strong>未訳は原文の側から数えている。</strong>
           訳文に何が入っているかを見ても、原文の何が落ちたかは分からない。
@@ -68,13 +74,6 @@ export default function ReadPage() {
           ステファヌス版の組版の都合であって、意味の切れ目ではない。
           原文がそこで切れている以上、和訳も同じところで切ってある ——
           読みやすさのために原文の切れ目を動かすと、住所が住所でなくなる。
-        </p>
-        <p>
-          <strong>載せているのは裁判三部だけで、これは全集の三十六分の三である。</strong>
-          本文をこの頁に直に埋め込んでいるので、篇を足すほど重くなる ——
-          三篇で配信 <strong>153 キロバイト</strong>(圧縮前 544 キロバイト)。
-          四篇目を足すとおよそ倍になるので、そのときは篇ごとに頁を分ける。
-          全 36 篇を一枚に載せることはしない。
         </p>
       </div>
 

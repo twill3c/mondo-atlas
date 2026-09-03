@@ -18,11 +18,20 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CUR = os.path.join(ROOT, "data", "curated")
-OUT = os.path.join(ROOT, "data", "reader.json")
+OUT_DIR = os.path.join(ROOT, "data", "reader")
 
 #: リーダーに載せる篇。全 36 篇の本文を配ると 12.5 MB になるので、
 #: **和訳が始まっている篇だけ**を出す。増えたらここに足す。
 INCLUDE = ["Euthphr", "Ap", "Crit"]
+
+
+def _index_entry(work: dict, n_bytes: int) -> dict:
+    """目次の 1 件。**本文(sections)は持たない** —— それが分割の意味である。"""
+    entry = {k: v for k, v in work.items() if k != "sections"}
+    entry["slug"] = work["abbr"].lower()
+    entry["pages"] = sorted({s["page"] for s in work["sections"]})
+    entry["bytes"] = n_bytes
+    return entry
 
 
 def main() -> int:
@@ -67,16 +76,27 @@ def main() -> int:
     # 全集の節数(充填率の分母は**全集**で取る。三篇だけを分母にすると進み具合が誇張される)
     corpus_sections = sum(w["n_sections"] for w in index.values())
 
+    os.makedirs(OUT_DIR, exist_ok=True)
+
+    # 篇ごとに本文を書き出す。画面はこのうち一つだけを読む
+    sizes = {}
+    for w in works:
+        path = os.path.join(OUT_DIR, w["abbr"] + ".json")
+        json.dump(w, open(path, "w", encoding="utf-8"), ensure_ascii=False,
+                  separators=(",", ":"))
+        sizes[w["abbr"]] = os.path.getsize(path)
+
+    # 目次は**本文を持たない**。/read/ はこれだけを読むので軽い
     doc = {
         "corpusSections": corpus_sections,
         "readerSections": total,
         "translated": done,
         "coverageOfReader": round(done / total, 4) if total else 0.0,
         "coverageOfCorpus": round(done / corpus_sections, 5),
-        "works": works,
+        "works": [_index_entry(w, sizes[w["abbr"]]) for w in works],
     }
-    json.dump(doc, open(OUT, "w", encoding="utf-8"), ensure_ascii=False,
-              separators=(",", ":"))
+    json.dump(doc, open(os.path.join(OUT_DIR, "index.json"), "w", encoding="utf-8"),
+              ensure_ascii=False, separators=(",", ":"))
 
     print("リーダーに載せた篇: {}".format(", ".join(w["title"] for w in works)))
     for w in works:
@@ -91,7 +111,13 @@ def main() -> int:
             print("  - " + p)
         return 1
     print("\n検算: 訳の節 ID はすべて原文に実在する(原文の側から数えた)")
-    print("→ {} ({:.0f} KB)".format(OUT, os.path.getsize(OUT) / 1000))
+    print("→ {}/".format(OUT_DIR))
+    for w in works:
+        print("   {:14} {:>6.0f} KB".format(w["abbr"] + ".json", sizes[w["abbr"]] / 1000))
+    idx_bytes = os.path.getsize(os.path.join(OUT_DIR, "index.json"))
+    print("   {:14} {:>6.1f} KB(本文を持たない目次)".format("index.json", idx_bytes / 1000))
+    print("いちばん大きい篇 {:.0f} KB —— 一枚に束ねていたときは {:.0f} KB だった".format(
+        max(sizes.values()) / 1000, sum(sizes.values()) / 1000))
     return 0
 
 

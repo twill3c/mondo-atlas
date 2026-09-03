@@ -15,26 +15,47 @@
  */
 
 import { createHash } from "node:crypto";
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 
-/** 画面がビルド時に import しているデータ。増やしたらここにも足す。 */
-export const STAMPED = [
-  "data/index.json",
-  "data/breath.json",
-  "data/words.json",
-  "data/style.json",
-  "data/japanese.json",
-  "data/reader.json",
-];
+/**
+ * 画面がビルド時に import しているデータ。
+ *
+ * リーダーは篇ごとに分かれていて**篇を足すとファイルが増える**ので、
+ * 一覧を手で書かず `data/reader/` を実際に見て作る ——
+ * 書き忘れると刻印が本文の変化を見落とす。
+ * T-720 が `app/` の import と突き合わせて漏れを撃つ。
+ */
+function readerFiles(root) {
+  const dir = join(root, "data", "reader");
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((n) => n.endsWith(".json"))
+    .sort()
+    .map((n) => `data/reader/${n}`);
+}
+
+export function stampedFiles(root = ROOT) {
+  return [
+    "data/index.json",
+    "data/breath.json",
+    "data/words.json",
+    "data/style.json",
+    "data/japanese.json",
+    ...readerFiles(root),
+  ];
+}
+
+/** 既定の木での対象一覧(検査が読みやすいように名前を残す)。 */
+export const STAMPED = stampedFiles();
 
 export function computeStamp(root = ROOT) {
   const h = createHash("sha256");
   const files = [];
-  for (const rel of STAMPED) {
+  for (const rel of stampedFiles(root)) {
     const buf = readFileSync(join(root, rel));
     const one = createHash("sha256").update(buf).digest("hex").slice(0, 12);
     files.push({ path: rel, bytes: buf.length, sha: one });

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { fmt } from "@/lib/chart";
 import {
   type ReaderWork,
+  type WorkLink,
   byPage,
   isUntranslated,
   pageIndexOf,
@@ -12,40 +13,46 @@ import {
   workOf,
 } from "@/lib/reader";
 
-export default function ReaderView({ works }: { works: ReaderWork[] }) {
-  const [abbr, setAbbr] = useState(works[works.length - 1].abbr);
+/**
+ * 一篇ぶんのリーダー。**この画面は自分の篇しか受け取らない**(N-03)。
+ * 他の篇へはリンクで移る —— 束ねて持つと篇を足すたびに全部が重くなる。
+ */
+export default function ReaderView({
+  work,
+  others,
+}: {
+  work: ReaderWork;
+  others: WorkLink[];
+}) {
+  const pages = useMemo(() => byPage(work), [work]);
   const [pageIdx, setPageIdx] = useState(0);
   const [focus, setFocus] = useState<string | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
 
-  const work = works.find((w) => w.abbr === abbr) ?? works[0];
-  const pages = useMemo(() => byPage(work), [work]);
   const p = progress(work);
   const group = pages[Math.min(pageIdx, pages.length - 1)];
 
-  // ?loc=Crit.51c で開いたら、その篇に切り替え、その節を含む**頁**を開いてそこへ飛ぶ。
-  // 形の検査を通った ID だけを使う(URL の文字列をそのまま要素の探索に渡さない)
+  // ?loc=Crit.51c で開いたら、その節を含む**頁**を開いてそこへ飛ぶ。
+  // 形の検査を通った ID だけを使う(URL の文字列をそのまま要素の探索に渡さない)。
+  // 別の篇の住所ならここでは何もしない —— 目次がその篇の頁へ送る
   useEffect(() => {
     const loc = parseLoc(window.location.search);
-    if (!loc) return;
-    const w = works.find((x) => x.abbr === workOf(loc));
-    if (!w) return;
-    const idx = pageIndexOf(w, loc);
+    if (!loc || workOf(loc) !== work.abbr) return;
+    const idx = pageIndexOf(work, loc);
     if (idx < 0) return;
-    setAbbr(w.abbr);
     setPageIdx(idx);
     setFocus(loc);
-  }, [works]);
+  }, [work]);
 
   useEffect(() => {
     if (!focus) return;
     const el = boxRef.current?.querySelector(`[data-sec="${CSS.escape(focus)}"]`);
     if (el) el.scrollIntoView({ block: "center", behavior: "auto" });
-  }, [focus, abbr, pageIdx]);
+  }, [focus, pageIdx]);
 
-  function go(idx: number, keepFocus = false) {
+  function go(idx: number) {
     setPageIdx(Math.max(0, Math.min(pages.length - 1, idx)));
-    if (!keepFocus) setFocus(null);
+    setFocus(null);
   }
 
   return (
@@ -58,19 +65,15 @@ export default function ReaderView({ works }: { works: ReaderWork[] }) {
             篇
           </span>
           <div className="segmented" role="group" aria-labelledby="rw-label">
-            {works.map((w) => (
-              <button
-                key={w.abbr}
-                type="button"
-                aria-pressed={w.abbr === abbr}
-                onClick={() => {
-                  setAbbr(w.abbr);
-                  setPageIdx(0);
-                  setFocus(null);
-                }}
+            {others.map((w) => (
+              <a
+                key={w.slug}
+                href={`/read/${w.slug}/`}
+                aria-current={w.abbr === work.abbr ? "page" : undefined}
+                className="segmented__link"
               >
                 {w.title}
-              </button>
+              </a>
             ))}
           </div>
         </div>
@@ -102,7 +105,8 @@ export default function ReaderView({ works }: { works: ReaderWork[] }) {
           ◀ 前の頁
         </button>
         <span className="pager__now">
-          {group.page} 頁<span className="pager__of">
+          {group.page} 頁
+          <span className="pager__of">
             {pageIdx + 1} / {pages.length}
           </span>
         </span>
@@ -121,7 +125,9 @@ export default function ReaderView({ works }: { works: ReaderWork[] }) {
             key={g.page}
             type="button"
             aria-pressed={i === pageIdx}
-            className={g.sections.every(isUntranslated) ? "pager__num pager__num--none" : "pager__num"}
+            className={
+              g.sections.every(isUntranslated) ? "pager__num pager__num--none" : "pager__num"
+            }
             title={
               g.sections.every(isUntranslated)
                 ? `${g.page} 頁(この頁はまだ訳していない)`
@@ -185,7 +191,8 @@ export default function ReaderView({ works }: { works: ReaderWork[] }) {
           ◀ 前の頁
         </button>
         <span className="pager__now">
-          {group.page} 頁<span className="pager__of">
+          {group.page} 頁
+          <span className="pager__of">
             {pageIdx + 1} / {pages.length}
           </span>
         </span>

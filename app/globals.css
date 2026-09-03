@@ -1239,3 +1239,66 @@ h2 {
 
 /* 住所の例(?loc=Crit.43a)は途中で折らない。折れると住所に見えない */
 .lede code { white-space: nowrap; }
+
+/* 読む — 目次(本文を持たない軽い頁) */
+.worklist {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.worklist__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem 0.8rem;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-1);
+}
+
+.worklist__link {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.worklist__link:hover { color: var(--series-1); text-decoration: underline; }
+
+.worklist__meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.7rem;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.worklist__meta .row__class { white-space: nowrap; }
+.worklist__meta .is-done { color: var(--series-3); }
+
+/* その篇を開くと何 KB 増えるかを出す(読み手に重さを知らせる) */
+.worklist__bytes { color: var(--text-muted); }
+
+/* 篇の切り替えは頁を移るのでリンクにする */
+.segmented__link {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.5rem 0.8rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.segmented__link + .segmented__link { border-left: 1px solid var(--border); }
+
+.segmented__link[aria-current="page"] {
+  background: var(--text-primary);
+  color: var(--surface-1);
+  font-weight: 600;
+}

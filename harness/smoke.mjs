@@ -136,6 +136,7 @@ async function probe(page) {
       secs: document.querySelectorAll(".sec").length,
       secCols: document.querySelectorAll(".sec__cols").length,
       pageNos: document.querySelectorAll(".reader__pageno").length,
+      workLinks: document.querySelectorAll(".worklist__link").length,
       pagerNums: document.querySelectorAll(".pager__num").length,
       // 未訳の節が「空欄」として出ているか(0 や空白で埋めていないか)
       emptyJa: document.querySelectorAll(".sec__ja--empty").length,
@@ -207,17 +208,25 @@ function checkAtWidth(width, r, expected, page = "/") {
     if (r.trustBanners !== 1) problems.push(`検証の断りが ${r.trustBanners} 個(期待 1)`);
     if (r.emptyPaths > 0) problems.push(`中身の無い経路が ${r.emptyPaths} 本ある`);
   } else if (page === "/read/") {
-    // 画面⑥: ステファヌス頁ごとにめくる。開くのは**一頁ぶん**
-    if (r.pageNos !== 1) problems.push(`頁見出しが ${r.pageNos} 個(期待 1 = 一頁ぶんだけ出す)`);
-    if (r.pagerNums !== expected.readerPages) {
-      problems.push(`頁を選ぶ釦が ${r.pagerNums}(期待 ${expected.readerPages})`);
+    // 画面⑥の目次: **本文を持たない**(N-03)。ここに節が出たら分割が壊れている
+    if (r.workLinks !== expected.readerWorks) {
+      problems.push(`篇の一覧が ${r.workLinks} 件(期待 ${expected.readerWorks})`);
     }
-    if (r.secs !== expected.readerFirstPage) {
-      problems.push(`初手の頁の節が ${r.secs}(期待 ${expected.readerFirstPage})`);
+    if (r.secs !== 0) problems.push(`目次に本文の節が ${r.secs} 件ある(分割が効いていない)`);
+    if (!r.hasFraction) problems.push("充填率が分子と分母で出ていない");
+  } else if (expected.perWork[page]) {
+    // 篇の頁: ステファヌス頁ごとにめくる。開くのは**一頁ぶん**
+    const want = expected.perWork[page];
+    if (r.pageNos !== 1) problems.push(`頁見出しが ${r.pageNos} 個(期待 1 = 一頁ぶんだけ出す)`);
+    if (r.pagerNums !== want.pagerNums) {
+      problems.push(`頁を選ぶ釦が ${r.pagerNums}(期待 ${want.pagerNums})`);
+    }
+    if (r.secs !== want.secs) {
+      problems.push(`初手の頁の節が ${r.secs}(期待 ${want.secs})`);
     }
     if (r.secCols !== r.secs) problems.push(`三段の欄が ${r.secCols}(節は ${r.secs})`);
     if (r.emptyGrc > 0) problems.push(`希語が空の節が ${r.emptyGrc} 件`);
-    // 完訳した篇を初手に出しているので、未訳の空欄は 0 でなければならない
+    // いま載せている篇はすべて完訳なので、未訳の空欄は 0 でなければならない
     if (r.emptyJa !== 0) problems.push(`完訳の篇なのに未訳の空欄が ${r.emptyJa} 件`);
   } else if (page === "/japanese/") {
     // 画面⑤: 36 篇の項目と、充填率の帯
@@ -308,12 +317,14 @@ function selfTest() {
     secCols: 5,
     pageNos: 1,
     pagerNums: 12,
+    workLinks: 3,
     emptyJa: 0,
     emptyGrc: 0,
   };
   const expected = {
     works: 36, tetralogies: 9, bins: 40, terms: 14, pages: 4, late: 6, predictions: 4,
-    readerPages: 12, readerFirstPage: 5,
+    readerWorks: 3,
+    perWork: { "/read/crit/": { pagerNums: 12, secs: 5 } },
   };
   const failures = [];
   if (checkAtWidth(1280, ok, expected).length !== 0) {
@@ -331,8 +342,11 @@ function selfTest() {
   if (checkAtWidth(1280, ok, expected, "/japanese/").length !== 0) {
     failures.push("画面⑤の正常な入力を落とした(偽陽性)");
   }
-  if (checkAtWidth(1280, ok, expected, "/read/").length !== 0) {
-    failures.push("画面⑥の正常な入力を落とした(偽陽性)");
+  if (checkAtWidth(1280, ok, expected, "/read/crit/").length !== 0) {
+    failures.push("篇の頁の正常な入力を落とした(偽陽性)");
+  }
+  if (checkAtWidth(1280, { ...ok, secs: 0 }, expected, "/read/").length !== 0) {
+    failures.push("目次の正常な入力を落とした(偽陽性)");
   }
   const cases = [
     ["横溢れ", { ...ok, scrollWidth: 1400 }],
@@ -406,6 +420,17 @@ function selfTest() {
     ["完訳の篇なのに未訳の空欄", { ...ok, emptyJa: 1 }],
   ];
   for (const [name, bad] of readCases) {
+    if (checkAtWidth(1280, bad, expected, "/read/crit/").length === 0) {
+      failures.push(`「${name}」を捕まえられない`);
+    }
+  }
+  // 目次の対照。**分割が壊れて目次に本文が出る**のがいちばん見たい故障
+  const indexCases = [
+    ["目次に本文が出ている", { ...ok, secs: 5 }],
+    ["篇の一覧の欠落", { ...ok, secs: 0, workLinks: 2 }],
+    ["充填率が割合だけ", { ...ok, secs: 0, hasFraction: false }],
+  ];
+  for (const [name, bad] of indexCases) {
     if (checkAtWidth(1280, bad, expected, "/read/").length === 0) {
       failures.push(`「${name}」を捕まえられない`);
     }
@@ -418,7 +443,8 @@ function selfTest() {
       wordCases.length +
       styleCases.length +
       jaCases.length +
-      readCases.length,
+      readCases.length +
+      indexCases.length,
   };
 }
 
@@ -445,30 +471,52 @@ async function main() {
     process.exit(2);
   }
 
-  const PAGES = ["/", "/breath/", "/words/", "/style/", "/japanese/", "/read/"];
-
   // 期待値は**実データから導く**。定数で書くと、データが増えたときに検査だけが古くなる
   const index = JSON.parse(readFileSync(join(ROOT, "data", "index.json"), "utf8"));
   const wordsData = JSON.parse(readFileSync(join(ROOT, "data", "words.json"), "utf8"));
   const styleData = JSON.parse(readFileSync(join(ROOT, "data", "style.json"), "utf8"));
-  const readerData = JSON.parse(readFileSync(join(ROOT, "data", "reader.json"), "utf8"));
+  const readerIndex = JSON.parse(
+    readFileSync(join(ROOT, "data", "reader", "index.json"), "utf8"),
+  );
+
+  // 篇ごとに頁が分かれた(N-03)ので、走る道筋も目次から導く ——
+  // 篇を足したら検品の対象も自動で増える
+  const WORK_PAGES = readerIndex.works.map((w) => `/read/${w.slug}/`);
+  const PAGES = ["/", "/breath/", "/words/", "/style/", "/japanese/", "/read/", ...WORK_PAGES];
+
+  // 画面の切り替えの数は**道筋の数ではない**(篇の頁は切り替えに出ない)。
+  // Nav の中身を実測する —— 定数で書くと、画面を足したとき検査だけが古くなる
+  const navSrc = readFileSync(join(ROOT, "app", "Nav.tsx"), "utf8");
+  const navCount = (navSrc.match(/href:\s*"/g) ?? []).length;
+
+  /** 篇ごとの期待値(頁の束の数と、初手に開く頁の節数)。 */
+  const perWork = {};
+  for (const w of readerIndex.works) {
+    const doc = JSON.parse(
+      readFileSync(join(ROOT, "data", "reader", `${w.abbr}.json`), "utf8"),
+    );
+    const first = doc.sections[0].page;
+    perWork[`/read/${w.slug}/`] = {
+      pagerNums: new Set(doc.sections.map((s) => s.page)).size,
+      secs: doc.sections.filter((s) => s.page === first).length,
+    };
+  }
+
   const expected = {
     works: index.works.length,
     tetralogies: new Set(index.works.map((w) => w.tetralogy)).size,
     bins: wordsData.bins,
     terms: wordsData.terms.length,
-    pages: PAGES.length,
-    // 初手に出るのは最後の篇(クリトン)の第一頁。頁の束は節 ID の頁番号から導く
-    readerPages: new Set(
-      readerData.works.find((w) => w.abbr === "Crit").sections.map((s) => s.page),
-    ).size,
-    readerFirstPage: readerData.works
-      .find((w) => w.abbr === "Crit")
-      .sections.filter((s) => s.page === readerData.works.find((x) => x.abbr === "Crit").sections[0].page)
-      .length,
+    pages: navCount,
+    readerWorks: readerIndex.works.length,
+    perWork,
     late: styleData.lateGroup.length,
     predictions: styleData.predictions.length,
   };
+  if (navCount < 5) {
+    console.error(`Nav の項目が ${navCount} 個しか読めない —— 実測の仕方が壊れている`);
+    process.exit(2);
+  }
 
   const server = liveBase ? null : await serve(OUT);
   const base = liveBase ?? `http://127.0.0.1:${server.address().port}/`;
@@ -563,7 +611,9 @@ async function main() {
                   ? `点 ${r.dots} / 後期 ${r.lateDots} / 予測 ${r.predictions} / 横の散り ${r.dotSpreadX}px`
                   : pagePath === "/japanese/"
                     ? `篇 ${r.jaItems} / 充填の帯 ${r.meters}`
-                    : `頁 ${r.pagerNums} 束 / 開いた頁の節 ${r.secs} / 三段 ${r.secCols}`;
+                    : pagePath === "/read/"
+                      ? `篇の一覧 ${r.workLinks} 件(本文なし)`
+                      : `頁 ${r.pagerNums} 束 / 開いた頁の節 ${r.secs} / 三段 ${r.secCols}`;
         console.log(
           `幅 ${width}px ${pagePath} — OK(${detail} / 高さ ${r.pageHeight}px / ` +
             `フッタ ${Math.round(r.footer.height)}px < 逃げ ${Math.round(r.bodyPaddingBottom)}px)`,
@@ -612,7 +662,8 @@ async function main() {
  */
 async function checkGreekFont(browser, base) {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
-  await page.goto(`${base.replace(/\/$/, "")}/read/`, { waitUntil: "networkidle" });
+  // 希語の本文があるのは**篇の頁**である(目次は本文を持たない)
+  await page.goto(`${base.replace(/\/$/, "")}/read/crit/`, { waitUntil: "networkidle" });
   const cdp = await page.context().newCDPSession(page);
   await cdp.send("DOM.enable");
   await cdp.send("CSS.enable");
@@ -675,22 +726,38 @@ async function checkGreekFont(browser, base) {
  * 通る例をいくら並べても分からない。壊れた住所では既定の頁に落ちるのが正しい。
  */
 async function checkDeepLinks(browser, base, expected) {
+  // [道筋, 期待する data-sec(null = 焦点なし), 期待する頁見出しの数字]
+  //
+  // **`/read/?loc=` は既に配ってしまった住所**である(画面の断り書きにも解説にも載せた)。
+  // 篇ごとに頁を分けたあとも、そこから篇の頁へ送られることを確かめる ——
+  // 分割で古いリンクを壊すのがいちばん起こりやすい事故なので、正例と壊れ例を両方置く。
   const cases = [
-    // [クエリ, 期待する data-sec(null = 焦点なし), 期待する頁見出しの数字]
-    ["?loc=Crit.51c", "Crit.51c", 51],
-    ["?loc=Crit.43a", "Crit.43a", 43],
-    ["?loc=Ap.17a", "Ap.17a", 17], // 未訳の篇でも住所は通る
-    ["?loc=%3Cscript%3E", null, null], // 形の検査で落ちる
-    ["?loc=Crit.99z", null, null], // 形が違う
-    ["?loc=Rep.327a", null, null], // 形は正しいがリーダーに載せていない篇
-    ["", null, null],
+    ["/read/crit/?loc=Crit.51c", "Crit.51c", 51],
+    ["/read/crit/?loc=Crit.43a", "Crit.43a", 43],
+    ["/read/ap/?loc=Ap.17a", "Ap.17a", 17],
+    ["/read/euthphr/?loc=Euthphr.10a", "Euthphr.10a", 10],
+    // 古い住所からの送り直し(目次が受けて篇の頁へ送る)
+    ["/read/?loc=Crit.51c", "Crit.51c", 51],
+    ["/read/?loc=Ap.38b", "Ap.38b", 38],
+    // 別の篇の住所を篇の頁に渡しても、その頁は何もしない(既定の頁のまま)
+    ["/read/crit/?loc=Ap.17a", null, null],
+    // 壊れた住所
+    ["/read/?loc=%3Cscript%3E", null, null],
+    ["/read/?loc=Crit.99z", null, null],
+    ["/read/?loc=Rep.327a", null, null],
+    ["/read/crit/", null, null],
   ];
   let bad = 0;
-  for (const [query, wantSec, wantPage] of cases) {
+  for (const [path, wantSec, wantPage] of cases) {
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on("pageerror", (e) => errors.push(String(e)));
-    await page.goto(`${base.replace(/\/$/, "")}/read/${query}`, { waitUntil: "networkidle" });
+    await page.goto(`${base.replace(/\/$/, "")}${path}`, { waitUntil: "networkidle" });
+    // 目次からの送り直しは location.replace なので、移動を待つ
+    if (path.startsWith("/read/?loc=") && wantSec) {
+      await page.waitForURL(/\/read\/[a-z]+\//, { timeout: 15000 }).catch(() => {});
+      await page.waitForLoadState("networkidle");
+    }
     const r = await page.evaluate(() => ({
       focus: document.querySelector(".sec--focus")?.getAttribute("data-sec") ?? null,
       nFocus: document.querySelectorAll(".sec--focus").length,
@@ -707,7 +774,19 @@ async function checkDeepLinks(browser, base, expected) {
     }));
     const problems = [];
     if (errors.length) problems.push(`JS エラー: ${errors.join(" / ")}`);
-    if (r.secs === 0) problems.push("節がひとつも出ていない");
+    const onWorkPage = /\/read\/[a-z]+\//.test(page.url());
+    if (wantSec && !onWorkPage) {
+      problems.push(`篇の頁へ送られていない(${page.url()})`);
+    }
+    // **壊れた住所を目次に渡したら、目次に留まる**のが正しい。
+    // 送り直してしまうと、形の検査を素通りさせたことになる
+    if (!wantSec && path.startsWith("/read/?") && onWorkPage) {
+      problems.push(`壊れた住所で篇の頁へ送られた(${page.url()})`);
+    }
+    // 本文があるのは篇の頁だけ。目次に節が出たら分割が壊れている
+    if (onWorkPage && r.secs === 0) problems.push("節がひとつも出ていない");
+    if (!onWorkPage && r.secs > 0) problems.push(`目次に本文の節が ${r.secs} 件ある`);
+    if (!onWorkPage && r.workLinks === 0) problems.push("目次に篇の一覧が無い");
     if (r.nFocus > 1) problems.push(`焦点が ${r.nFocus} 個(期待 1 以下)`);
     if (wantSec === null) {
       if (r.focus !== null) problems.push(`壊れた住所で ${r.focus} に飛んだ(既定の頁に落ちるべき)`);
@@ -720,11 +799,11 @@ async function checkDeepLinks(browser, base, expected) {
     }
     if (problems.length) {
       bad++;
-      console.error(`直リンク /read/${query} — 不合格`);
+      console.error(`直リンク ${path} — 不合格`);
       for (const p of problems) console.error("  - " + p);
     } else {
       console.log(
-        `直リンク /read/${query || "(なし)"} — OK` +
+        `直リンク ${path} — OK` +
           (wantSec ? `(${r.focus} を ${wantPage} 頁で開いた)` : "(既定の頁に落ちた)"),
       );
     }
