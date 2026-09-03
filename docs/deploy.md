@@ -109,3 +109,16 @@ curl -sS -o /dev/null -w '%{http_code} %{content_type} %{size_download}' https:/
 | 本番 | https://mondo-atlas-coral.vercel.app/ |
 | 検品 | 3 幅 × **6 画面** + 直リンク 7 件 + 字形 1 件、すべて合格 |
 | 書体 | `/fonts/*.woff2` 三つが `200 font/woff2` で配られている |
+
+## 実測(2026-09-03 三回目・L8 の反映)
+
+| 項目 | 値 |
+|---|---|
+| 本番 | https://mondo-atlas-coral.vercel.app/ |
+| 検品 | 3 幅 × 6 画面 + 直リンク 7 件 + 字形 1 件、すべて合格 |
+| 中身の確認 | `/read/` に エウテュプロンの和訳・充填率 129/254・全集比 1.51% |
+| 壊れた英語 | `prosecutingThe` は本番に**無い**(装置の除去が届いている) |
+
+**検品が緑でも「中身が新しいか」は別に見る。** `npm run smoke:prod` は
+既定で開くクリトンの頁しか見ないので、L8 で足したエウテュプロンの訳が
+本番に届いたかどうかは、本番 HTML を引いて文字列で確かめた。
