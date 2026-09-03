@@ -112,3 +112,25 @@ describe("並び", () => {
     expect(coverage(1, 2)).toBe(0.5);
   });
 });
+
+describe("第2層は篇ごとに全頁で入れる", () => {
+  it("T-612 要旨を書いた篇は、その篇の全頁が埋まっている", () => {
+    // **半端に埋めない。** 途中まで書いた篇があると、充填率だけが上がって
+    // 「この篇は読める」と誤読される。篇の単位で入れて、入れたら全頁書く。
+    // 実測 2026-09-04: エウテュプロン 15 / 弁明 26 / クリトン 12 / メノン 31 / 饗宴 52
+    const started = works.filter((w) => w.nSummaries > 0);
+    expect(started.length).toBeGreaterThan(0);
+    for (const w of started) {
+      expect(w.nSummaries, `${w.abbr} が途中までしか埋まっていない`).toBe(w.nPages);
+    }
+    // 対照: まだ書いていない篇は 0 のまま(全部埋まっていることにしない)
+    const untouched = works.filter((w) => w.nSummaries === 0);
+    expect(untouched.length).toBeGreaterThan(0);
+    for (const w of untouched) {
+      expect(w.nSummaries, w.abbr).toBe(0);
+    }
+    // 書いた篇と書いていない篇の両方があること自体を固定する ——
+    // どちらか一方だけになると、上の二つの検査は片方が空回りする
+    expect(started.length + untouched.length).toBe(works.length);
+  });
+});
