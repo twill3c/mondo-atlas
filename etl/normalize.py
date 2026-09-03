@@ -24,8 +24,18 @@ div の入れ子ではなく**文書順の走査**で決める必要がある。
 - `<label>`: 印刷面の話者記号(`ΣΩ.` `ΚΡ.`)。**本文ではなく校訂者の印**であり、
   L2 の発話交替検出器に読ませてはならない(G-03 循環の禁止)。`sigla` に分離する
 - `<head>`: 篇の見出し
+- `<note>`: Loeb 版の訳者注。**英訳側だけに 4,394 件 113,710 語**あり、
+  地の文の内側に置かれているので、そのまま連結すると訳文として並ぶ
+- `<bibl>`: 引用元の指示(`Hom. Il. 9.363`)。**希英どちらにもある**
 
 `<del>`(校訂者が削除を提案した箇所)と `<add>` は OCT の紙面に現れるので本文に含める。
+
+## 装置を外すときの約束(HC-140)
+
+**外した量は数えて `index.json` に載せる。** 黙って消すと、
+「本文語数」が何を数えていないのかが読めなくなる(HC-119 と同じ型)。
+また、外す前に**節の区切りが内側に隠れていないか**を確かめ、
+隠れていれば例外で止める —— 落とすと節が消えるからである。
 """
 
 from __future__ import annotations
@@ -44,7 +54,22 @@ SECTION_N = re.compile(r"^(\d+)([a-e])$")
 GREEK_LETTER = re.compile(r"[Ͱ-Ͽἀ-῿]")
 
 #: 本文に含めない要素(中身ごと除く)
-NON_BODY = {T + "label", T + "head"}
+#:
+#: `note` は Loeb 版の**訳者注**である。英訳の本文に地の文として溶け込んで
+#: 出てくるので、放っておくと「英訳」の語数にも本文にも混ざる。
+#: 実測 4,394 件・113,710 語で、**英訳語数の 12.8%** がこれだった
+#: (法律だけで 2,767 件)。希語側には 1 件も無い。
+#: 落とすが、**落とした量は index.json に載せる**(黙って消さない)。
+#:
+#: `bibl` は引用元の指示(`Hom. Il. 9.363` / `Stasinus Cypria Fr. 20`)で、
+#: これも地の文の内側に置かれている。**希語側にもある**(178 件 528 語)——
+#: ラテン文字の近代的な出典表記が「ギリシャ語本文」に数えられていた。
+#: 上流の取り込みが崩れて `ηομ. ιλ. 9.363` とギリシャ文字に化けたものもある。
+#: `quote` の中身(引用された詩句そのもの)は本文なので残す。
+NON_BODY = {T + "label", T + "head", T + "note", T + "bibl"}
+
+#: 本文から外す「装置」。要素ごとに件数と語数を数えて index.json に載せる
+APPARATUS = {T + "note": "note", T + "bibl": "bibl"}
 
 
 def tokens(text: str) -> list[str]:
@@ -76,6 +101,18 @@ def _iter_events(el):
             sig = _clean("".join(el.itertext()))
             if sig:
                 yield ("siglum", sig)
+        if el.tag in APPARATUS:
+            # **落とす前に、節の区切りが内側に隠れていないか確かめる。**
+            # 上流実測(2026-09-03)では装置の中の milestone は
+            # `unit="para"` の 2 件だけで、節の区切りは 1 件も無い。
+            # 上流が変わってここに節の区切りが入ったら、黙って落ちるのではなく止まる。
+            for ms in el.iter(T + "milestone"):
+                if ms.get("unit") == "section":
+                    raise ValueError(
+                        "{} の内側に節の区切りがある(n={}): "
+                        "落とすと節が消えるので、扱いを決め直すこと".format(
+                            APPARATUS[el.tag], ms.get("n")))
+            yield ("apparatus", (APPARATUS[el.tag], _clean("".join(el.itertext()))))
         if el.tail:
             yield ("text", el.tail)
         return
@@ -100,6 +137,7 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
     cur: dict | None = None
     pre_text: list[str] = []
     skipped: list[str] = []
+    appar: dict[str, list[str]] = {"note": [], "bibl": []}
     book = letter = None
 
     for kind, value in _iter_events(body):
@@ -131,6 +169,11 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
                 "_sig_char": [],
             }
             secs.append(cur)
+        elif kind == "apparatus":
+            # 本文には入れないが、**落とした量は数えて持ち帰る**
+            what, txt = value
+            if txt:
+                appar[what].append(txt)
         elif kind == "siglum":
             if cur is not None:
                 cur["sigla"].append(value)
@@ -158,7 +201,16 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
         s["sigla_at"] = [len(tokens(raw[: c + adj])) for c in offs]
         prev_raw = raw
 
-    info = {"skipped_milestones": skipped, "preamble_tokens": len(tokens(preamble))}
+    info = {
+        "skipped_milestones": skipped,
+        "preamble_tokens": len(tokens(preamble)),
+        # 本文から外した装置。**件数と語数を持ち帰る**ので、
+        # 「本文語数」が何を数えていないかが index.json から読める
+        "n_notes": len(appar["note"]),
+        "note_words": sum(len(tokens(n)) for n in appar["note"]),
+        "n_bibl": len(appar["bibl"]),
+        "bibl_words": sum(len(tokens(n)) for n in appar["bibl"]),
+    }
     return secs, info
 
 
@@ -295,6 +347,14 @@ def build_corpus(raw_dir: str, curated_path: str,
             "eng_extra": sorted(set(eng_by_id) - {s["id"] for s in secs}),
             "skipped_milestones": info["skipped_milestones"],
             "eng_skipped_milestones": eng_info["skipped_milestones"],
+            # 本文から外した装置。訳者注(Loeb)は英訳側だけ、出典表記は両側にある
+            "eng_notes": eng_info["n_notes"],
+            "eng_note_words": eng_info["note_words"],
+            "eng_bibl": eng_info["n_bibl"],
+            "eng_bibl_words": eng_info["bibl_words"],
+            "grc_notes": info["n_notes"],
+            "grc_bibl": info["n_bibl"],
+            "grc_bibl_words": info["bibl_words"],
             "preamble_tokens": info["preamble_tokens"],
             "glued_boundaries": sum(1 for s in secs if s.get("glue_prev")),
         })
@@ -338,8 +398,19 @@ if __name__ == "__main__":
     tot_w = sum(w["words_grc"] for w in corpus["works"])
     tot_e = sum(w["words_eng"] for w in corpus["works"])
     miss = sum(len(w["eng_missing"]) for w in corpus["works"])
+    tot_note = sum(w["eng_note_words"] for w in corpus["works"])
+    tot_note_n = sum(w["eng_notes"] for w in corpus["works"])
+    grc_note_n = sum(w["grc_notes"] for w in corpus["works"])
     print("篇 {} / 節 {} / 希語 {} 語 / 英訳 {} 語 / 英訳の無い節 {}".format(
         stats["works"], tot_sec, tot_w, tot_e, miss))
+    gb_n = sum(w["grc_bibl"] for w in corpus["works"])
+    gb_w = sum(w["grc_bibl_words"] for w in corpus["works"])
+    eb_n = sum(w["eng_bibl"] for w in corpus["works"])
+    eb_w = sum(w["eng_bibl_words"] for w in corpus["works"])
+    print("本文から外した訳者注: 英 {} 件 / {} 語(希 {} 件)".format(
+        tot_note_n, tot_note, grc_note_n))
+    print("本文から外した出典表記: 希 {} 件 / {} 語、英 {} 件 / {} 語".format(
+        gb_n, gb_w, eb_n, eb_w))
     print("補正の適用: {}".format(corpus["corrections_applied"]))
     for w in corpus["works"]:
         if w["eng_missing"] or w["eng_extra"] or w["skipped_milestones"]:

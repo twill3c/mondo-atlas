@@ -351,3 +351,96 @@ def test_t013b_text_before_first_milestone_is_not_dropped():
     secs = normalize.sections_from_tei_string(tei, abbr="X")
     joined = normalize.tokens(" ".join(s["grc"] for s in secs))
     assert "ΠΡΟΛΟΓΟΣ" in joined, "最初の節より前の本文が消えている"
+
+
+# ------------------------------------------------------- T-017..T-019(訳者注)
+
+@pytest.mark.validation
+def test_t017_translator_notes_are_not_in_the_english_body(corpus):
+    """T-017 / G-04: Loeb の訳者注が英訳の本文に混ざっていない。
+
+    上流の TEI では `<note resp="Loeb">` が地の文の途中に置かれており、
+    そのまま連結すると**注が訳文として出る**。しかも語の途中に挟まるので
+    `prosecutingThe` のような語ができる(実測 3,532 箇所)。
+    """
+    for w in corpus["works"]:
+        for s in w["sections"]:
+            assert "prosequor" not in s["eng"], (
+                "{}: 訳者注が英訳の本文に残っている".format(s["id"]))
+
+    # 注を外した結果、語の切れ目が直っていること
+    euth = next(w for w in corpus["works"] if w["abbr"] == "Euthphr")
+    sec = next(s for s in euth["sections"] if s["id"] == "Euthphr.4a")
+    assert "prosecutingThe" not in sec["eng"], "注の手前で語がくっついたまま"
+    assert "prosecuting him" in sec["eng"], "注を外したら本文が繋がるはず"
+
+
+@pytest.mark.validation
+def test_t018_dropped_notes_are_counted_not_hidden(corpus):
+    """T-018: 外した訳者注は**数えて index に載せる**(黙って消さない)。
+
+    「英訳語数」が何を数えていないかが読めなければ、
+    数だけが独り歩きする(HC-119 と同じ型)。
+    """
+    tot_n = sum(w["eng_notes"] for w in corpus["works"])
+    tot_words = sum(w["eng_note_words"] for w in corpus["works"])
+    grc_n = sum(w["grc_notes"] for w in corpus["works"])
+
+    assert tot_n == 4394, "訳者注の件数(実測 2026-09-03)"
+    assert tot_words == 113710, "訳者注の語数(実測 2026-09-03)"
+    assert grc_n == 0, "希語側に訳者注は無いはず"
+
+    # **注は全集に均等に散っていない。** 国家(Shorey 訳)だけで
+    # 2,767 件・88,290 語 = 全集の注の 77.6% を占める。
+    # 国家の「英訳」は旧の数え方で 41.5% が注だった
+    rep = next(w for w in corpus["works"] if w["abbr"] == "Rep")
+    assert rep["eng_notes"] == 2767, "国家の訳者注の件数(実測)"
+    assert rep["eng_note_words"] == 88290, "国家の訳者注の語数(実測)"
+    assert rep["eng_note_words"] / tot_words > 0.75, "国家に偏っていることを固定する"
+
+    # 注が 1 件も無い篇は無い(36 篇すべてが影響を受けていた)
+    assert all(w["eng_notes"] > 0 for w in corpus["works"])
+
+    # 出典表記(`Hom. Il. 9.363`)は**希語側にもある**。
+    # ラテン文字の近代的な表記が「ギリシャ語本文」に数えられていた
+    grc_bibl = sum(w["grc_bibl"] for w in corpus["works"])
+    grc_bibl_w = sum(w["grc_bibl_words"] for w in corpus["works"])
+    assert grc_bibl == 178, "希語側の出典表記の件数(実測 2026-09-03)"
+    assert grc_bibl_w == 528, "希語側の出典表記の語数(実測)"
+
+    tot_grc = sum(w["words_grc"] for w in corpus["works"])
+    assert tot_grc == 559157, "装置を外した希語本文語数(実測 2026-09-03)"
+
+    # words_eng は注を含まない
+    tot_eng = sum(w["words_eng"] for w in corpus["works"])
+    assert tot_eng == 777817, "装置を外した英訳語数(実測 2026-09-03)"
+
+
+@pytest.mark.unit
+def test_t019_section_boundary_inside_a_note_stops_the_build():
+    """T-019 の陽性対照: 注の内側に節の区切りがあれば**止まる**。
+
+    上流実測では注の中の milestone は `unit="para"` の 2 件だけで、
+    節の区切りは無い。だから注を丸ごと落としてよい ——
+    **その前提が崩れたら黙って節が消える**ので、例外にする。
+    """
+    tei = (
+        '<TEI xmlns="http://www.tei-c.org/ns/1.0"><text><body>'
+        '<div type="edition"><div type="textpart" subtype="section" n="17">'
+        '<milestone unit="section" resp="Stephanus" n="17a"/>'
+        "AAA"
+        '<note resp="Loeb">note text'
+        '<milestone unit="section" resp="Stephanus" n="17b"/>'
+        "</note>"
+        "BBB"
+        "</div></div></body></text></TEI>"
+    )
+    with pytest.raises(ValueError, match="note"):
+        normalize.sections_from_tei_string(tei, abbr="X")
+
+    # 対照: 注の中が para の milestone なら通る(いまの上流がこれ)
+    ok = tei.replace('unit="section" resp="Stephanus" n="17b"', 'unit="para"')
+    secs = normalize.sections_from_tei_string(ok, abbr="X")
+    assert len(secs) == 1
+    assert "note text" not in secs[0]["grc"], "注の中身が本文に入っている"
+    assert "AAABBB" in normalize.tokens(secs[0]["grc"]), "注を挟んだ語が繋がるはず"

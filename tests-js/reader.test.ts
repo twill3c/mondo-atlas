@@ -45,11 +45,19 @@ describe("配られるデータ", () => {
     }
   });
 
-  it("T-703 クリトンは完訳(実測 2026-09-02)", () => {
-    const crit = works.find((w) => w.abbr === "Crit")!;
-    expect(crit.complete).toBe(true);
-    expect(crit.untranslated).toEqual([]);
-    expect(crit.nTranslated).toBe(59);
+  it("T-703 完訳した篇は完訳になっている(実測 2026-09-03)", () => {
+    const done: Record<string, number> = { Crit: 59, Euthphr: 70 };
+    for (const [abbr, n] of Object.entries(done)) {
+      const w = works.find((x) => x.abbr === abbr)!;
+      expect(w.complete, abbr).toBe(true);
+      expect(w.untranslated, abbr).toEqual([]);
+      expect(w.nTranslated, abbr).toBe(n);
+    }
+    // **対照**: まだ訳していない篇が完訳と出ないこと。
+    // これが無いと「全部 complete にする」実装でも上が通る
+    const ap = works.find((w) => w.abbr === "Ap")!;
+    expect(ap.complete).toBe(false);
+    expect(ap.nTranslated).toBe(0);
   });
 
   it("T-704 訳の節 ID はすべて原文に実在する", () => {
