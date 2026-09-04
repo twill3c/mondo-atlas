@@ -28,7 +28,14 @@ div の入れ子ではなく**文書順の走査**で決める必要がある。
   地の文の内側に置かれているので、そのまま連結すると訳文として並ぶ
 - `<bibl>`: 引用元の指示(`Hom. Il. 9.363`)。**希英どちらにもある**
 
-`<del>`(校訂者が削除を提案した箇所)と `<add>` は OCT の紙面に現れるので本文に含める。
+## 本文に**残す**もの(2026-09-04 に実測で裏づけた)
+
+`<del>` `<add>` `<sic>` `<corr>` `<gap>` は本文に含める。
+はじめは「OCT の紙面に現れるから」という**測っていない理由**で残していたので、
+二重計上が起きていないかを確かめた —— `<choice>` は 0 件、`sic`/`corr` は対でなく、
+`del`/`add` の隣接は 599 件中 1 件。どれも唯一の読みとして本文中に立つ。
+**外さないが、件数と語数は `index.json` に出す**(希語 559,157 語のうち 991 語)。
+装置を外すときに量を載せるのと同じ理由で、残すときも中身が読めるようにしておく。
 
 ## 装置を外すときの約束(HC-140)
 
@@ -132,6 +139,34 @@ def _iter_events(el):
         yield ("text", el.tail)
 
 
+#: 本文に**残す**校訂の印。OCT の紙面に印刷されているので本文である。
+#:
+#: 2026-09-04 の実測で残す判断を裏づけた(L8 から五ループ持ち越していた宿題)——
+#:   - `<choice>` は **0 件**。つまり「あれかこれか」の対立候補という構造を持たない
+#:   - `sic`(21)と `corr`(2)は**対になっていない**。親はいずれも本文の要素
+#:     (`said` / `l` / `q` / `quote`)で、それぞれが唯一の読みとして本文中に立つ
+#:   - `del`(402)と `add`(197)が空白なしで隣接するのは **599 件中 1 件**だけ。
+#:     置き換えの対として並んでいるわけではない
+#: よって二重計上は起きない。OCT は削除提案を角括弧、補いを山括弧で**印刷する**ので、
+#: 紙面を写すという方針(`<label>` を外し `<note>` を外したのと同じ基準)では本文に含める。
+#: ただし**数は出す** —— 出さないと「本文語数」の中身が読めない。
+KEPT_MARKS = ("del", "add", "sic", "corr", "gap")
+
+
+def count_marks(body) -> dict:
+    """本文に残した校訂の印を数える(件数と語数)。"""
+    out: dict = {}
+    for tag in KEPT_MARKS:
+        els = list(body.iter(T + tag))
+        if not els:
+            continue
+        out[tag] = {
+            "n": len(els),
+            "words": sum(len(tokens("".join(e.itertext()))) for e in els),
+        }
+    return out
+
+
 def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
     secs: list[dict] = []
     cur: dict | None = None
@@ -210,6 +245,9 @@ def _sections_from_body(body, abbr: str) -> tuple[list[dict], dict]:
         "note_words": sum(len(tokens(n)) for n in appar["note"]),
         "n_bibl": len(appar["bibl"]),
         "bibl_words": sum(len(tokens(n)) for n in appar["bibl"]),
+        # 本文に**残した**校訂の印。外さないが、数は出せるようにする ——
+        # そうしないと「本文語数」の中身が読めない(HC-140 の裏返し)
+        "marks": count_marks(body),
     }
     return secs, info
 
@@ -355,6 +393,9 @@ def build_corpus(raw_dir: str, curated_path: str,
             "grc_notes": info["n_notes"],
             "grc_bibl": info["n_bibl"],
             "grc_bibl_words": info["bibl_words"],
+            # 本文に残した校訂の印(外していない。数だけ出す)
+            "grc_marks": info["marks"],
+            "eng_marks": eng_info["marks"],
             "preamble_tokens": info["preamble_tokens"],
             "glued_boundaries": sum(1 for s in secs if s.get("glue_prev")),
         })
@@ -411,6 +452,19 @@ if __name__ == "__main__":
         tot_note_n, tot_note, grc_note_n))
     print("本文から外した出典表記: 希 {} 件 / {} 語、英 {} 件 / {} 語".format(
         gb_n, gb_w, eb_n, eb_w))
+
+    # 本文に**残した**校訂の印。外していないので語数には入っている
+    marks = {}
+    for w in corpus["works"]:
+        for tag, v in w["grc_marks"].items():
+            cur = marks.setdefault(tag, {"n": 0, "words": 0})
+            cur["n"] += v["n"]
+            cur["words"] += v["words"]
+    if marks:
+        parts = ["{} {} 件/{} 語".format(t, v["n"], v["words"]) for t, v in sorted(marks.items())]
+        print("本文に残した校訂の印(希): " + " / ".join(parts))
+        print("  → 上の希語 {} 語には、この {} 語が含まれる".format(
+            tot_w, sum(v["words"] for v in marks.values())))
     print("補正の適用: {}".format(corpus["corrections_applied"]))
     for w in corpus["works"]:
         if w["eng_missing"] or w["eng_extra"] or w["skipped_milestones"]:

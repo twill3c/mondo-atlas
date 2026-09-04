@@ -25,9 +25,16 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 4,
+   "grc_marks": {
+    "del": {
+     "n": 7,
+     "words": 8
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 104655,
+   "bytes": 104708,
    "n_eng_missing": 0
   },
   {
@@ -55,9 +62,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 4,
+     "words": 5
+    },
+    "add": {
+     "n": 3,
+     "words": 3
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 179723,
+   "bytes": 179800,
    "n_eng_missing": 0
   },
   {
@@ -85,9 +103,16 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 3,
+   "grc_marks": {
+    "del": {
+     "n": 5,
+     "words": 9
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 2,
-   "bytes": 85953,
+   "bytes": 86006,
    "n_eng_missing": 0
   },
   {
@@ -115,9 +140,24 @@
    "grc_notes": 0,
    "grc_bibl": 2,
    "grc_bibl_words": 6,
+   "grc_marks": {
+    "del": {
+     "n": 45,
+     "words": 82
+    },
+    "add": {
+     "n": 9,
+     "words": 11
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 441864,
+   "bytes": 441968,
    "n_eng_missing": 0
   },
   {
@@ -145,9 +185,24 @@
    "grc_notes": 0,
    "grc_bibl": 6,
    "grc_bibl_words": 18,
+   "grc_marks": {
+    "del": {
+     "n": 56,
+     "words": 128
+    },
+    "add": {
+     "n": 21,
+     "words": 23
+    },
+    "sic": {
+     "n": 2,
+     "words": 2
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 382216,
+   "bytes": 382322,
    "n_eng_missing": 0
   },
   {
@@ -179,9 +234,24 @@
    "grc_notes": 0,
    "grc_bibl": 2,
    "grc_bibl_words": 9,
+   "grc_marks": {
+    "del": {
+     "n": 20,
+     "words": 26
+    },
+    "add": {
+     "n": 7,
+     "words": 7
+    },
+    "sic": {
+     "n": 3,
+     "words": 11
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 492852,
+   "bytes": 492956,
    "n_eng_missing": 0
   },
   {
@@ -209,9 +279,24 @@
    "grc_notes": 0,
    "grc_bibl": 4,
    "grc_bibl_words": 11,
+   "grc_marks": {
+    "del": {
+     "n": 31,
+     "words": 40
+    },
+    "add": {
+     "n": 19,
+     "words": 21
+    },
+    "sic": {
+     "n": 4,
+     "words": 6
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 355069,
+   "bytes": 355174,
    "n_eng_missing": 0
   },
   {
@@ -239,9 +324,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 18,
+     "words": 24
+    },
+    "add": {
+     "n": 6,
+     "words": 6
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 384417,
+   "bytes": 384496,
    "n_eng_missing": 0
   },
   {
@@ -269,9 +365,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 14,
+     "words": 17
+    },
+    "add": {
+     "n": 5,
+     "words": 5
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 290727,
+   "bytes": 290806,
    "n_eng_missing": 0
   },
   {
@@ -299,9 +406,24 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 3,
+   "grc_marks": {
+    "del": {
+     "n": 38,
+     "words": 63
+    },
+    "add": {
+     "n": 16,
+     "words": 18
+    },
+    "corr": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 377601,
+   "bytes": 377707,
    "n_eng_missing": 0
   },
   {
@@ -329,9 +451,24 @@
    "grc_notes": 0,
    "grc_bibl": 15,
    "grc_bibl_words": 51,
+   "grc_marks": {
+    "add": {
+     "n": 5,
+     "words": 5
+    },
+    "corr": {
+     "n": 1,
+     "words": 1
+    },
+    "gap": {
+     "n": 3,
+     "words": 0
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 362947,
+   "bytes": 363049,
    "n_eng_missing": 1
   },
   {
@@ -359,9 +496,20 @@
    "grc_notes": 0,
    "grc_bibl": 4,
    "grc_bibl_words": 10,
+   "grc_marks": {
+    "del": {
+     "n": 13,
+     "words": 16
+    },
+    "add": {
+     "n": 13,
+     "words": 14
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 1,
-   "bytes": 356580,
+   "bytes": 356661,
    "n_eng_missing": 0
   },
   {
@@ -389,9 +537,20 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 3,
+   "grc_marks": {
+    "del": {
+     "n": 5,
+     "words": 13
+    },
+    "add": {
+     "n": 13,
+     "words": 99
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 223196,
+   "bytes": 223276,
    "n_eng_missing": 0
   },
   {
@@ -419,9 +578,20 @@
    "grc_notes": 0,
    "grc_bibl": 11,
    "grc_bibl_words": 30,
+   "grc_marks": {
+    "del": {
+     "n": 3,
+     "words": 4
+    },
+    "add": {
+     "n": 4,
+     "words": 5
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 90540,
+   "bytes": 90617,
    "n_eng_missing": 0
   },
   {
@@ -449,9 +619,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 1,
+     "words": 1
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 49597,
+   "bytes": 49674,
    "n_eng_missing": 0
   },
   {
@@ -479,9 +660,20 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 3,
+   "grc_marks": {
+    "del": {
+     "n": 1,
+     "words": 2
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 51737,
+   "bytes": 51814,
    "n_eng_missing": 0
   },
   {
@@ -509,9 +701,20 @@
    "grc_notes": 0,
    "grc_bibl": 2,
    "grc_bibl_words": 6,
+   "grc_marks": {
+    "del": {
+     "n": 2,
+     "words": 2
+    },
+    "sic": {
+     "n": 1,
+     "words": 3
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 73938,
+   "bytes": 74015,
    "n_eng_missing": 0
   },
   {
@@ -539,9 +742,20 @@
    "grc_notes": 0,
    "grc_bibl": 1,
    "grc_bibl_words": 3,
+   "grc_marks": {
+    "del": {
+     "n": 14,
+     "words": 17
+    },
+    "add": {
+     "n": 4,
+     "words": 6
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 168104,
+   "bytes": 168183,
    "n_eng_missing": 0
   },
   {
@@ -569,9 +783,24 @@
    "grc_notes": 0,
    "grc_bibl": 3,
    "grc_bibl_words": 9,
+   "grc_marks": {
+    "del": {
+     "n": 9,
+     "words": 20
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 162172,
+   "bytes": 162274,
    "n_eng_missing": 0
   },
   {
@@ -599,9 +828,24 @@
    "grc_notes": 0,
    "grc_bibl": 3,
    "grc_bibl_words": 8,
+   "grc_marks": {
+    "del": {
+     "n": 8,
+     "words": 8
+    },
+    "add": {
+     "n": 5,
+     "words": 6
+    },
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 141628,
+   "bytes": 141729,
    "n_eng_missing": 0
   },
   {
@@ -629,9 +873,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 13,
+     "words": 26
+    },
+    "add": {
+     "n": 8,
+     "words": 9
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 258638,
+   "bytes": 258717,
    "n_eng_missing": 0
   },
   {
@@ -659,9 +914,24 @@
    "grc_notes": 0,
    "grc_bibl": 18,
    "grc_bibl_words": 50,
+   "grc_marks": {
+    "del": {
+     "n": 9,
+     "words": 13
+    },
+    "add": {
+     "n": 10,
+     "words": 10
+    },
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 367208,
+   "bytes": 367312,
    "n_eng_missing": 1
   },
   {
@@ -689,9 +959,24 @@
    "grc_notes": 0,
    "grc_bibl": 6,
    "grc_bibl_words": 18,
+   "grc_marks": {
+    "del": {
+     "n": 17,
+     "words": 32
+    },
+    "add": {
+     "n": 4,
+     "words": 5
+    },
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 3,
-   "bytes": 562286,
+   "bytes": 562389,
    "n_eng_missing": 0
   },
   {
@@ -719,9 +1004,24 @@
    "grc_notes": 0,
    "grc_bibl": 3,
    "grc_bibl_words": 10,
+   "grc_marks": {
+    "del": {
+     "n": 3,
+     "words": 3
+    },
+    "add": {
+     "n": 2,
+     "words": 2
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 205408,
+   "bytes": 205509,
    "n_eng_missing": 0
   },
   {
@@ -749,9 +1049,16 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 4,
+     "words": 6
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 174948,
+   "bytes": 175001,
    "n_eng_missing": 1
   },
   {
@@ -779,9 +1086,25 @@
    "grc_notes": 0,
    "grc_bibl": 5,
    "grc_bibl_words": 15,
+   "grc_marks": {
+    "del": {
+     "n": 2,
+     "words": 2
+    },
+    "add": {
+     "n": 2,
+     "words": 2
+    }
+   },
+   "eng_marks": {
+    "del": {
+     "n": 1,
+     "words": 11
+    }
+   },
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 90198,
+   "bytes": 90299,
    "n_eng_missing": 0
   },
   {
@@ -809,9 +1132,16 @@
    "grc_notes": 0,
    "grc_bibl": 5,
    "grc_bibl_words": 16,
+   "grc_marks": {
+    "del": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 81403,
+   "bytes": 81456,
    "n_eng_missing": 1
   },
   {
@@ -839,9 +1169,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 2,
+     "words": 2
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 110619,
+   "bytes": 110696,
    "n_eng_missing": 0
   },
   {
@@ -869,9 +1210,16 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 2,
+     "words": 2
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 35052,
+   "bytes": 35105,
    "n_eng_missing": 0
   },
   {
@@ -910,9 +1258,45 @@
    "grc_notes": 0,
    "grc_bibl": 61,
    "grc_bibl_words": 177,
+   "grc_marks": {
+    "del": {
+     "n": 31,
+     "words": 52
+    },
+    "add": {
+     "n": 17,
+     "words": 18
+    },
+    "sic": {
+     "n": 3,
+     "words": 3
+    },
+    "gap": {
+     "n": 15,
+     "words": 0
+    }
+   },
+   "eng_marks": {
+    "del": {
+     "n": 1,
+     "words": 1
+    },
+    "add": {
+     "n": 5,
+     "words": 5
+    },
+    "corr": {
+     "n": 2,
+     "words": 2
+    },
+    "gap": {
+     "n": 2,
+     "words": 0
+    }
+   },
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 1868877,
+   "bytes": 1869103,
    "n_eng_missing": 0
   },
   {
@@ -940,9 +1324,20 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 5,
+     "words": 6
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 527336,
+   "bytes": 527413,
    "n_eng_missing": 0
   },
   {
@@ -970,9 +1365,33 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 1,
+     "words": 1
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    },
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
+   "eng_marks": {
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 110570,
+   "bytes": 110718,
    "n_eng_missing": 0
   },
   {
@@ -1000,9 +1419,16 @@
    "grc_notes": 0,
    "grc_bibl": 3,
    "grc_bibl_words": 9,
+   "grc_marks": {
+    "add": {
+     "n": 2,
+     "words": 4
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 60432,
+   "bytes": 60485,
    "n_eng_missing": 0
   },
   {
@@ -1043,9 +1469,33 @@
    "grc_notes": 0,
    "grc_bibl": 15,
    "grc_bibl_words": 40,
+   "grc_marks": {
+    "del": {
+     "n": 11,
+     "words": 17
+    },
+    "add": {
+     "n": 13,
+     "words": 13
+    },
+    "sic": {
+     "n": 1,
+     "words": 1
+    },
+    "gap": {
+     "n": 5,
+     "words": 0
+    }
+   },
+   "eng_marks": {
+    "add": {
+     "n": 1,
+     "words": 2
+    }
+   },
    "preamble_tokens": 0,
    "glued_boundaries": 1,
-   "bytes": 2264735,
+   "bytes": 2264887,
    "n_eng_missing": 0
   },
   {
@@ -1073,9 +1523,24 @@
    "grc_notes": 0,
    "grc_bibl": 0,
    "grc_bibl_words": 0,
+   "grc_marks": {
+    "del": {
+     "n": 5,
+     "words": 5
+    },
+    "add": {
+     "n": 1,
+     "words": 1
+    },
+    "sic": {
+     "n": 2,
+     "words": 2
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 137308,
+   "bytes": 137409,
    "n_eng_missing": 0
   },
   {
@@ -1117,9 +1582,24 @@
    "grc_notes": 0,
    "grc_bibl": 4,
    "grc_bibl_words": 16,
+   "grc_marks": {
+    "del": {
+     "n": 2,
+     "words": 2
+    },
+    "add": {
+     "n": 3,
+     "words": 3
+    },
+    "gap": {
+     "n": 1,
+     "words": 0
+    }
+   },
+   "eng_marks": {},
    "preamble_tokens": 0,
    "glued_boundaries": 0,
-   "bytes": 379969,
+   "bytes": 380070,
    "n_eng_missing": 0
   }
  ]

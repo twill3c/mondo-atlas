@@ -444,3 +444,57 @@ def test_t019_section_boundary_inside_a_note_stops_the_build():
     assert len(secs) == 1
     assert "note text" not in secs[0]["grc"], "注の中身が本文に入っている"
     assert "AAABBB" in normalize.tokens(secs[0]["grc"]), "注を挟んだ語が繋がるはず"
+
+
+@pytest.mark.validation
+def test_t020_kept_editorial_marks_are_counted(corpus):
+    """T-020: 本文に**残した**校訂の印も、件数と語数を出す。
+
+    外すときに量を載せる(T-018)のと同じ理由で、残すときも中身が読めるようにする。
+    「本文語数」が何でできているかを言えなければ、数だけが独り歩きする。
+    """
+    total = {}
+    for w in corpus["works"]:
+        for tag, v in w["grc_marks"].items():
+            cur = total.setdefault(tag, {"n": 0, "words": 0})
+            cur["n"] += v["n"]
+            cur["words"] += v["words"]
+
+    # 実測 2026-09-04
+    assert total["del"]["n"] == 402
+    assert total["add"]["n"] == 197
+    assert total["sic"]["n"] == 21
+    assert total["corr"]["n"] == 2
+    assert total["gap"]["n"] == 28
+    assert total["gap"]["words"] == 0, "gap は空要素なので語を持たない"
+
+    # 校訂の印は本文語数に**含まれている**(外していない)
+    marked = sum(v["words"] for v in total.values())
+    assert marked == 991
+    tot_grc = sum(w["words_grc"] for w in corpus["works"])
+    assert marked < tot_grc * 0.01, "校訂の印は本文の 1% 未満"
+
+
+@pytest.mark.validation
+def test_t021_kept_marks_are_not_alternative_readings(corpus_raw):
+    """T-021: 残す判断の**根拠**を検査に固定する。
+
+    `del`/`add`/`sic`/`corr` を本文に含めてよいのは、それらが「あれかこれか」の
+    対立候補ではなく、**唯一の読み**として本文中に立つからである。
+    上流が TEI の `<choice>` を使い始めたら、同じ箇所の二つの読みが両方とも
+    本文語数に入る —— そのとき黙って通さないよう、ここで撃つ。
+    """
+    import xml.etree.ElementTree as ET
+    import glob
+
+    T = normalize.T
+    n_choice = 0
+    for path in sorted(glob.glob(os.path.join(RAW, "*", "*.xml"))):
+        body = ET.parse(path).getroot().find(".//t:text/t:body", normalize.NS)
+        if body is None:
+            continue
+        n_choice += sum(1 for _ in body.iter(T + "choice"))
+    assert n_choice == 0, (
+        "上流が <choice> を使い始めた。同じ箇所の複数の読みが本文語数に"
+        "二重で入るので、KEPT_MARKS の扱いを決め直すこと"
+    )
